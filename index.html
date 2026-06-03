@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CFO Ковенант-монитор | Долг, EBITDA, стресс-тесты, прогноз</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #eef2f9;
+            margin: 0;
+            padding: 24px 20px;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #cfdfed;
+            padding-bottom: 8px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #2c5a6e;
+        }
+        .tab-btn.active {
+            background: #1e6f5c;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .tab-pane {
+            display: none;
+            animation: fade 0.2s ease;
+        }
+        .tab-pane.active-pane {
+            display: block;
+        }
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(6px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+            border: 1px solid #e2edf2;
+            transition: all 0.1s;
+        }
+        .card-header {
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-left: 5px solid #1e6f5c;
+            padding-left: 14px;
+            margin-bottom: 20px;
+            color: #0a2e3b;
+        }
+        .input-row {
+            margin-bottom: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+        }
+        .input-row label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #2c5a6e;
+            min-width: 160px;
+        }
+        input, select {
+            padding: 10px 14px;
+            border-radius: 18px;
+            border: 1px solid #cbdde9;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: white;
+            flex: 1;
+            min-width: 140px;
+        }
+        .metric-big {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0b2b3b;
+            line-height: 1.2;
+        }
+        .metric-small {
+            font-size: 0.75rem;
+            color: #5f7d95;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .pass { background: #dcfce7; color: #15803d; }
+        .fail { background: #fee2e2; color: #b91c1c; }
+        .warn { background: #fff0db; color: #b45f06; }
+        .progress-bar {
+            background: #e5eef4;
+            border-radius: 20px;
+            height: 12px;
+            width: 100%;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            background: #1e6f5c;
+            height: 12px;
+            border-radius: 20px;
+            width: 0%;
+        }
+        .sensitivity-group {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+        button {
+            background: #1e6f5c;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 32px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button.outline {
+            background: transparent;
+            border: 1px solid #1e6f5c;
+            color: #1e6f5c;
+        }
+        hr {
+            margin: 20px 0;
+            border: none;
+            height: 1px;
+            background: #e2edf2;
+        }
+        .verdict {
+            background: #f0f6fa;
+            border-radius: 20px;
+            padding: 16px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        @media (max-width: 700px) {
+            .input-row { flex-direction: column; align-items: flex-start; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div style="margin-bottom: 16px;">
+        <h1 style="margin:0; color:#0a2e3b;">📐 Ковенант-монитор PRO</h1>
+        <p style="color:#3d6b80;">Долг / EBITDA • ICR • Стресс • Прогноз запаса (Headroom) — для финдира и кредитного комитета</p>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="fact">📋 Факт (LTM)</button>
+        <button class="tab-btn" data-tab="debt">🏦 Долг и ставки</button>
+        <button class="tab-btn" data-tab="stress">⚠️ Стресс-тест</button>
+        <button class="tab-btn" data-tab="forecast">🔮 Прогноз + Headroom</button>
+    </div>
+
+    <!-- ========================= ВКЛАДКА 1: ФАКТ ========================= -->
+    <div id="factPane" class="tab-pane active-pane">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-header">📊 Базовые финансовые показатели (LTM)</div>
+                <div class="input-row"><label>Чистая прибыль (тыс. руб)</label><input type="number" id="netIncome" value="4250000"></div>
+                <div class="input-row"><label>Проценты к уплате (тыс. руб)</label><input type="number" id="interestExp" value="520000"></div>
+                <div class="input-row"><label>Налог на прибыль (тыс. руб)</label><input type="number" id="taxes" value="1080000"></div>
+                <div class="input-row"><label>Амортизация (D&A, тыс. руб)</label><input type="number" id="depreciation" value="890000"></div>
+                <div class="input-row"><label>Собственный капитал (тыс. руб)</label><input type="number" id="equity" value="18500000"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">📈 Фактические ковенанты</div>
+                <div><span class="metric-small">EBITDA (LTM)</span><div class="metric-big" id="factEbitda">—</div></div>
+                <div class="input-row"><span>Долг / EBITDA</span><span id="factLev" class="badge">—</span></div>
+                <div class="input-row"><span>Процентное покрытие (ICR)</span><span id="factIcr" class="badge">—</span></div>
+                <div class="input-row"><span>Net Debt / Equity</span><span id="factD2E" class="badge">—</span></div>
+                <div class="progress-bar"><div class="progress-fill" id="headroomFillFact" style="width:0%"></div></div>
+                <div id="factHeadroomText" class="metric-small">Запас по ковенанту Долг/EBITDA: —</div>
+            </div>
+        </div>
+        <div class="card verdict" id="verdictFact">⚖️ Оценка ковенантов на основе фактических данных</div>
+    </div>
+
+    <!-- ========================= ВКЛАДКА 2: ДОЛГ И СТАВКИ ========================= -->
+    <div id="debtPane" class="tab-pane">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-header">🏛️ Структура долга</div>
+                <div class="input-row"><label>Краткосрочный долг (тыс. руб)</label><input type="number" id="shortDebt" value="3200000"></div>
+                <div class="input-row"><label>Долгосрочный долг (тыс. руб)</label><input type="number" id="longDebt" value="9500000"></div>
+                <div class="input-row"><label>Денежные средства (тыс. руб)</label><input type="number" id="cash" value="1500000"></div>
+                <div class="input-row"><label>Средневзвеш. ставка (% , фактич.)</label><input type="number" id="avgRate" value="12.5" step="0.5"></div>
+                <div class="input-row"><label>Операционный лизинг (тыс. руб) *</label><input type="number" id="leaseAdj" value="0" placeholder="добавить к долгу"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">🧾 Расчётный чистый долг</div>
+                <div><span class="metric-small">Total Gross Debt</span><div class="metric-big" id="grossDebt">—</div></div>
+                <div><span class="metric-small">Чистый долг (Net Debt)</span><div class="metric-big" id="netDebtCalc">—</div></div>
+                <div><span class="metric-small">Годовые проценты (поток)</span><div id="annualInterestPay" style="font-weight:700">—</div></div>
+                <div class="metric-small">*лизинг увеличивает скорректированный долг (IFRS 16)</div>
+                <button id="syncDebtBtn" class="outline" style="margin-top:12px">⟳ Синхронизировать с фактом (Net Debt)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= ВКЛАДКА 3: СТРЕСС-ТЕСТ ========================= -->
+    <div id="stressPane" class="tab-pane">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-header">⚡ Сценарии ухудшения</div>
+                <div class="sensitivity-group">
+                    <div class="input-row"><label>Изменение выручки/EBITDA margin</label><input type="range" id="stressEbitda" min="-40" max="0" value="-15" step="5"> <span id="stressEbitdaVal">-15%</span></div>
+                    <div class="input-row"><label>Рост ставки (процентных расходов)</label><input type="range" id="stressRate" min="0" max="5" value="2" step="0.5"> <span id="stressRateVal">+2%</span></div>
+                </div>
+                <div class="verdict" id="stressComment">Примените стресс, чтобы увидеть нарушение ковенантов</div>
+            </div>
+            <div class="card">
+                <div class="card-header">📉 Результаты стресс-теста</div>
+                <div>Стресс-EBITDA: <strong id="stressedEbitda">—</strong></div>
+                <div>Долг / EBITDA (стресс): <strong id="stressedLev">—</strong> <span id="stressBadge" class="badge"></span></div>
+                <div>ICR (стресс): <strong id="stressedIcr">—</strong></div>
+                <div>∆ до нарушения ковенанта: <strong id="headroomStress">—</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= ВКЛАДКА 4: ПРОГНОЗ + HEADROOM ========================= -->
+    <div id="forecastPane" class="tab-pane">
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-header">📆 Прогнозные параметры (4 квартала)</div>
+                <div class="input-row"><label>Рост EBITDA (квартальный, %)</label><input type="number" id="fcastGrowth" value="2" step="1"></div>
+                <div class="input-row"><label>Новый долг (привлечение, тыс. руб)</label><input type="number" id="newDebt" value="0"></div>
+                <div class="input-row"><label>Погашение долга (тыс. руб)</label><input type="number" id="repayment" value="400000"></div>
+                <div class="input-row"><label>Изменение ставки (% пунктов)</label><input type="number" id="deltaRate" value="0" step="0.5"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">🔮 Forward Covenant Headroom</div>
+                <div>Прогнозная EBITDA (4 кв): <strong id="fcastEbitda">—</strong></div>
+                <div>Прогнозный Net Debt: <strong id="fcastNetDebt">—</strong></div>
+                <div>Долг/EBITDA прогноз: <strong id="fcastLev">—</strong> <span id="fcastBadge" class="badge"></span></div>
+                <div class="progress-bar mt-2"><div class="progress-fill" id="headroomFillFcast" style="width:0%"></div></div>
+                <div id="headroomFcastText" class="metric-small">Запас до лимита 3.0x: —</div>
+            </div>
+        </div>
+        <div class="card verdict" id="verdictForward">Прогнозная оценка ковенантов через 12 месяцев</div>
+    </div>
+</div>
+
+<script>
+    // DOM elements
+    // факт
+    const netIncome = document.getElementById('netIncome');
+    const interestExp = document.getElementById('interestExp');
+    const taxes = document.getElementById('taxes');
+    const depreciation = document.getElementById('depreciation');
+    const equityEl = document.getElementById('equity');
+    // долги
+    const shortDebt = document.getElementById('shortDebt');
+    const longDebt = document.getElementById('longDebt');
+    const cash = document.getElementById('cash');
+    const avgRate = document.getElementById('avgRate');
+    const leaseAdj = document.getElementById('leaseAdj');
+    // стресс
+    const stressEbitdaSlider = document.getElementById('stressEbitda');
+    const stressRateSlider = document.getElementById('stressRate');
+    // прогноз
+    const fcastGrowth = document.getElementById('fcastGrowth');
+    const newDebtInput = document.getElementById('newDebt');
+    const repaymentInput = document.getElementById('repayment');
+    const deltaRate = document.getElementById('deltaRate');
+
+    // display fields
+    const factEbitdaSpan = document.getElementById('factEbitda');
+    const factLevSpan = document.getElementById('factLev');
+    const factIcrSpan = document.getElementById('factIcr');
+    const factD2ESpan = document.getElementById('factD2E');
+    const headroomFillFact = document.getElementById('headroomFillFact');
+    const factHeadroomText = document.getElementById('factHeadroomText');
+    const verdictFact = document.getElementById('verdictFact');
+    const grossDebtSpan = document.getElementById('grossDebt');
+    const netDebtCalcSpan = document.getElementById('netDebtCalc');
+    const annualInterestPaySpan = document.getElementById('annualInterestPay');
+    const syncBtn = document.getElementById('syncDebtBtn');
+    const stressedEbitdaSpan = document.getElementById('stressedEbitda');
+    const stressedLevSpan = document.getElementById('stressedLev');
+    const stressBadgeSpan = document.getElementById('stressBadge');
+    const stressedIcrSpan = document.getElementById('stressedIcr');
+    const headroomStressSpan = document.getElementById('headroomStress');
+    const stressCommentSpan = document.getElementById('stressComment');
+    const fcastEbitdaSpan = document.getElementById('fcastEbitda');
+    const fcastNetDebtSpan = document.getElementById('fcastNetDebt');
+    const fcastLevSpan = document.getElementById('fcastLev');
+    const fcastBadge = document.getElementById('fcastBadge');
+    const headroomFillFcast = document.getElementById('headroomFillFcast');
+    const headroomFcastText = document.getElementById('headroomFcastText');
+    const verdictForward = document.getElementById('verdictForward');
+    const stressEbitdaVal = document.getElementById('stressEbitdaVal');
+    const stressRateVal = document.getElementById('stressRateVal');
+
+    function formatMoney(v) { return new Intl.NumberFormat('ru-RU').format(Math.round(v)); }
+    function formatRatio(v, digits=2) { if(v===undefined || !isFinite(v)) return '∞'; return v.toFixed(digits)+'x'; }
+    
+    // основные расчёты факта
+    function calcEbitda() {
+        let ni = parseFloat(netIncome.value) || 0;
+        let int = parseFloat(interestExp.value) || 0;
+        let tax = parseFloat(taxes.value) || 0;
+        let da = parseFloat(depreciation.value) || 0;
+        return ni + int + tax + da;
+    }
+    function getNetDebtFromInputs() {
+        let short = parseFloat(shortDebt.value) || 0;
+        let long = parseFloat(longDebt.value) || 0;
+        let cashVal = parseFloat(cash.value) || 0;
+        let lease = parseFloat(leaseAdj.value) || 0;
+        return (short+long+lease) - cashVal;
+    }
+    function getGrossDebt() { return (parseFloat(shortDebt.value)||0)+(parseFloat(longDebt.value)||0)+(parseFloat(leaseAdj.value)||0); }
+    
+    function updateFactAndDerived() {
+        let ebitda = calcEbitda();
+        let netDebt = getNetDebtFromInputs();
+        let equity = parseFloat(equityEl.value) || 1;
+        let interest = parseFloat(interestExp.value) || 0;
+        factEbitdaSpan.innerText = formatMoney(ebitda)+' тыс. руб';
+        let lev = (ebitda>0) ? netDebt/ebitda : (netDebt>0 ? 999 : 0);
+        let icr = (interest>0) ? ebitda/interest : (ebitda>0 ? 999 : 0);
+        let d2e = (equity>0) ? netDebt/equity : 0;
+        factLevSpan.innerText = formatRatio(lev,2); factLevSpan.className = (lev<3 ? 'badge pass' : 'badge fail');
+        factIcrSpan.innerText = formatRatio(icr,2); factIcrSpan.className = (icr>=2 ? 'badge pass' : 'badge fail');
+        factD2ESpan.innerText = formatRatio(d2e,2); factD2ESpan.className = (d2e<1 ? 'badge pass' : 'badge warn');
+        let headroom = Math.max(0, (3 - lev)/3 * 100);
+        if(lev>=3) headroom=0;
+        headroomFillFact.style.width = Math.min(100, headroom)+'%';
+        factHeadroomText.innerText = `Запас до 3.0x: ${(3-lev).toFixed(2)}x (${headroom.toFixed(0)}% от лимита)`;
+        let verdictText = (lev<3 && icr>=2) ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.' : (lev>=3 ? '⚠️ НАРУШЕНИЕ: Долг/EBITDA > 3.0x, требуется waiver или рефинансирование.' : '⚠️ Низкое процентное покрытие, риск ковенанта.');
+        verdictFact.innerText = verdictText;
+        return {ebitda, netDebt, interest, lev, icr};
+    }
+    
+    function updateDebtPanel() {
+        let gross = getGrossDebt();
+        let netD = getNetDebtFromInputs();
+        let rate = (parseFloat(avgRate.value)||0)/100;
+        let interestCalc = netD * rate; // расчётные проценты на основе чистого долга (упрощённо)
+        grossDebtSpan.innerText = formatMoney(gross);
+        netDebtCalcSpan.innerText = formatMoney(netD);
+        annualInterestPaySpan.innerText = formatMoney(interestCalc) + ' тыс. руб (оценочно)';
+    }
+    
+    function syncNetDebtToFact() {
+        // переносим чистый долг в компоненты (упрощённо: увеличим долгосрочный)
+        let currentNet = getNetDebtFromInputs();
+        let targetNet = (()=>{ let s=parseFloat(shortDebt.value)||0; let l=parseFloat(longDebt.value)||0; let c=parseFloat(cash.value)||0; return (s+l)-c; })();
+        // ничего не делаем авто, но просто обновим панель
+        updateDebtPanel();
+        updateFactAndDerived();
+        updateStressAndForecast();
+    }
+    
+    function updateStressAndForecast() {
+        let base = updateFactAndDerived();
+        let ebitdaBase = base.ebitda;
+        let interestBase = base.interest;
+        let netDebtBase = getNetDebtFromInputs();
+        let stressPct = (parseFloat(stressEbitdaSlider.value)||0)/100;
+        let stressedEbitda = ebitdaBase * (1+stressPct);
+        let rateShift = (parseFloat(stressRateSlider.value)||0)/100;
+        let stressedInterest = interestBase * (1+rateShift);
+        let stressedLev = (stressedEbitda>0) ? netDebtBase/stressedEbitda : 999;
+        let stressedIcr = (stressedInterest>0) ? stressedEbitda/stressedInterest : 999;
+        stressedEbitdaSpan.innerText = formatMoney(stressedEbitda);
+        stressedLevSpan.innerText = formatRatio(stressedLev,2);
+        stressedIcrSpan.innerText = formatRatio(stressedIcr,2);
+        let stressFail = stressedLev>=3;
+        stressBadgeSpan.innerText = stressFail ? '❌ Ковенант нарушен' : '✅ Остаётся в норме';
+        stressBadgeSpan.className = stressFail ? 'badge fail' : 'badge pass';
+        let headroomStress = Math.max(0, 3-stressedLev).toFixed(2);
+        headroomStressSpan.innerText = headroomStress+'x до лимита';
+        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки Долг/EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x.`;
+        
+        // Forecast
+        let growthQ = (parseFloat(fcastGrowth.value)||0)/100;
+        let ebitdaForecast = ebitdaBase * (1+growthQ);
+        let newD = (parseFloat(newDebtInput.value)||0);
+        let repay = (parseFloat(repaymentInput.value)||0);
+        let deltaR = (parseFloat(deltaRate.value)||0)/100;
+        let netDebtForecast = netDebtBase + newD - repay;
+        let interestForecast = interestBase * (1+deltaR);
+        let levForecast = (ebitdaForecast>0) ? netDebtForecast/ebitdaForecast : 999;
+        fcastEbitdaSpan.innerText = formatMoney(ebitdaForecast);
+        fcastNetDebtSpan.innerText = formatMoney(netDebtForecast);
+        fcastLevSpan.innerText = formatRatio(levForecast,2);
+        let fcastOk = levForecast<3;
+        fcastBadge.innerText = fcastOk ? '✅ Прогноз соблюдает' : '⚠️ Нарушение через 12 мес';
+        fcastBadge.className = fcastOk ? 'badge pass' : 'badge fail';
+        let headroomFcast = Math.max(0, (3-levForecast)/3*100);
+        headroomFillFcast.style.width = Math.min(100, headroomFcast)+'%';
+        headroomFcastText.innerText = `Запас до 3.0x: ${(3-levForecast).toFixed(2)}x (${headroomFcast.toFixed(0)}% от лимита)`;
+        let forwardVerdict = (levForecast<3) ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.' : `⚠️ При текущем прогнозе через 4 квартала Долг/EBITDA = ${levForecast.toFixed(2)}x → требуется снижение долга или рост EBITDA.`;
+        verdictForward.innerText = forwardVerdict;
+    }
+    
+    // event listeners
+    const allFact = [netIncome, interestExp, taxes, depreciation, equityEl];
+    const allDebt = [shortDebt, longDebt, cash, avgRate, leaseAdj];
+    const allStress = [stressEbitdaSlider, stressRateSlider];
+    const allForecast = [fcastGrowth, newDebtInput, repaymentInput, deltaRate];
+    [...allFact, ...allDebt].forEach(el => el.addEventListener('input', () => { updateFactAndDerived(); updateDebtPanel(); updateStressAndForecast(); }));
+    allStress.forEach(el => el.addEventListener('input', () => { updateStressAndForecast(); updateFactAndDerived(); }));
+    allForecast.forEach(el => el.addEventListener('input', () => updateStressAndForecast()));
+    syncBtn.addEventListener('click', () => { updateDebtPanel(); updateFactAndDerived(); updateStressAndForecast(); });
+    
+    stressEbitdaSlider.addEventListener('input', () => stressEbitdaVal.innerText = stressEbitdaSlider.value+'%');
+    stressRateSlider.addEventListener('input', () => stressRateVal.innerText = '+'+stressRateSlider.value+'%');
+    
+    // tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active-pane'));
+            document.getElementById(btn.dataset.tab+'Pane').classList.add('active-pane');
+        });
+    });
+    // init
+    updateFactAndDerived();
+    updateDebtPanel();
+    updateStressAndForecast();
+    stressEbitdaVal.innerText = stressEbitdaSlider.value+'%';
+    stressRateVal.innerText = '+'+stressRateSlider.value+'%';
+</script>
+</body>
+</html>
