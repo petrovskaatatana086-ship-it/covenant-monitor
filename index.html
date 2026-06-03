@@ -283,7 +283,7 @@
 <div class="dashboard">
     <div style="margin-bottom: 16px;">
         <h1 style="margin:0; color:#0a2e3b;">📐 Ковенант-монитор PRO</h1>
-        <p style="color:#3d6b80;">Долг / EBITDA • ICR • Стресс • Прогноз запаса (Headroom) — для финдира и кредитного комитета</p>
+        <p style="color:#3d6b80;">Чистый долг / EBITDA • ICR • Стресс • Прогноз запаса (Headroom) — для финдира и кредитного комитета</p>
     </div>
     <div class="tabs">
         <button class="tab-btn active" data-tab="fact">📋 Факт (LTM)</button>
@@ -302,16 +302,16 @@
                 <div class="input-row"><label>Проценты к уплате за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="interestExp" value="520000"><span class="field-note">Фактические процентные расходы по кредитам/займам за LTM. Нужны для ICR = EBITDA / проценты.</span></div></div>
                 <div class="input-row"><label>Налог на прибыль за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="taxes" value="1080000"><span class="field-note">Начисленный налог на прибыль за LTM. Добавляется обратно при расчёте EBITDA.</span></div></div>
                 <div class="input-row"><label>Амортизация D&A за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="depreciation" value="890000"><span class="field-note">Амортизация основных средств и НМА за LTM. Добавляется обратно к прибыли.</span></div></div>
-                <div class="input-row"><label>Собственный капитал на отчётную дату (тыс. руб)</label><div class="field-wrap"><input type="number" id="equity" value="18500000"><span class="field-note">Балансовый капитал на конец периода. Используется для Net Debt / Equity.</span></div></div>
+                <div class="input-row"><label>Собственный капитал на отчётную дату (тыс. руб)</label><div class="field-wrap"><input type="number" id="equity" value="18500000"><span class="field-note">Балансовый капитал на конец периода. Используется для Чистый долг / Equity.</span></div></div>
             </div>
             <div class="card">
                 <div class="card-header">📈 Фактические ковенанты</div>
                 <div><span class="metric-small">EBITDA (LTM)</span><div class="metric-big" id="factEbitda">—</div></div>
-                <div class="input-row"><span>Долг / EBITDA</span><span id="factLev" class="badge">—</span></div>
+                <div class="input-row"><span>Чистый долг / EBITDA</span><span id="factLev" class="badge">—</span></div>
                 <div class="input-row"><span>Процентное покрытие (ICR)</span><span id="factIcr" class="badge">—</span></div>
-                <div class="input-row"><span>Net Debt / Equity</span><span id="factD2E" class="badge">—</span></div>
+                <div class="input-row"><span>Чистый долг / Equity</span><span id="factD2E" class="badge">—</span></div>
                 <div class="progress-bar"><div class="progress-fill" id="headroomFillFact" style="width:0%"></div></div>
-                <div id="factHeadroomText" class="metric-small">Запас по ковенанту Долг/EBITDA: —</div>
+                <div id="factHeadroomText" class="metric-small">Запас по ковенанту Чистый долг / EBITDA: —</div>
             </div>
         </div>
         <div class="card verdict" id="verdictFact">⚖️ Оценка ковенантов на основе фактических данных</div>
@@ -331,7 +331,7 @@
             </div>
             <div class="card">
                 <div class="card-header">🧾 Расчётный чистый долг</div>
-                <div><span class="metric-small">Total Gross Debt</span><div class="metric-big" id="grossDebt">—</div></div>
+                <div><span class="metric-small">Общий долг (Gross Debt)</span><div class="metric-big" id="grossDebt">—</div></div>
                 <div><span class="metric-small">Чистый долг (Net Debt)</span><div class="metric-big" id="netDebtCalc">—</div></div>
                 <div><span class="metric-small">Годовые проценты по gross debt</span><div id="annualInterestPay" style="font-weight:700">—</div></div>
                 <div class="metric-small">*лизинг увеличивает скорректированный долг (IFRS 16)</div>
@@ -354,9 +354,9 @@
             <div class="card">
                 <div class="card-header">📉 Результаты стресс-теста</div>
                 <div>Стресс-EBITDA: <strong id="stressedEbitda">—</strong></div>
-                <div>Долг / EBITDA (стресс): <strong id="stressedLev">—</strong> <span id="stressBadge" class="badge"></span></div>
+                <div>Чистый долг / EBITDA (стресс): <strong id="stressedLev">—</strong> <span id="stressBadge" class="badge"></span></div>
                 <div>ICR (стресс): <strong id="stressedIcr">—</strong></div>
-                <div>∆ до нарушения ковенанта: <strong id="headroomStress">—</strong></div>
+                <div>Запас до нарушения ковенанта: <strong id="headroomStress">—</strong></div>
             </div>
         </div>
     </div>
@@ -376,7 +376,7 @@
                 <div class="card-header">🔮 Forward Covenant Headroom</div>
                 <div>Прогнозная EBITDA (4 кв): <strong id="fcastEbitda">—</strong></div>
                 <div>Прогнозный Net Debt: <strong id="fcastNetDebt">—</strong></div>
-                <div>Долг/EBITDA прогноз: <strong id="fcastLev">—</strong> <span id="fcastBadge" class="badge"></span></div>
+                <div>Чистый долг / EBITDA прогноз: <strong id="fcastLev">—</strong> <span id="fcastBadge" class="badge"></span></div>
                 <div class="progress-bar mt-2"><div class="progress-fill" id="headroomFillFcast" style="width:0%"></div></div>
                 <div id="headroomFcastText" class="metric-small">Запас до лимита 3.0x: —</div>
             </div>
@@ -480,7 +480,7 @@
         if(lev>=3) headroom=0;
         headroomFillFact.style.width = Math.min(100, headroom)+'%';
         factHeadroomText.innerText = `Запас до 3.0x: ${(3-lev).toFixed(2)}x (${headroom.toFixed(0)}% от лимита)`;
-        let verdictText = (lev<3 && icr>=2) ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.' : (lev>=3 ? '⚠️ НАРУШЕНИЕ: Долг/EBITDA > 3.0x, требуется waiver или рефинансирование.' : '⚠️ Низкое процентное покрытие, риск ковенанта.');
+        let verdictText = (lev<3 && icr>=2) ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.' : (lev>=3 ? '⚠️ НАРУШЕНИЕ: Чистый долг / EBITDA > 3.0x, требуется waiver или рефинансирование.' : '⚠️ Низкое процентное покрытие, риск ковенанта.');
         verdictFact.innerText = verdictText;
         return {ebitda, netDebt, interest, lev, icr};
     }
@@ -527,7 +527,7 @@
         stressBadgeSpan.className = stressFail ? 'badge fail' : 'badge pass';
         let headroomStress = Math.max(0, 3-stressedLev).toFixed(2);
         headroomStressSpan.innerText = headroomStress+'x до лимита';
-        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки на ${Math.round(rateShift*1000)/10} п.п. Долг/EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x. ICR пересчитан по ставке ${(stressedRate*100).toFixed(1)}%.`;
+        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки на ${Math.round(rateShift*1000)/10} п.п. Чистый долг / EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x. ICR пересчитан по ставке ${(stressedRate*100).toFixed(1)}%.`;
         
         // Forecast
         let growthQ = num(fcastGrowth)/100;
@@ -549,7 +549,7 @@
         let headroomFcast = Math.max(0, (3-levForecast)/3*100);
         headroomFillFcast.style.width = Math.min(100, headroomFcast)+'%';
         headroomFcastText.innerText = `Запас до 3.0x: ${(3-levForecast).toFixed(2)}x (${headroomFcast.toFixed(0)}% от лимита)`;
-        let forwardVerdict = (levForecast<3) ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.' : `⚠️ При текущем прогнозе через 4 квартала Долг/EBITDA = ${levForecast.toFixed(2)}x → требуется снижение долга или рост EBITDA.`;
+        let forwardVerdict = (levForecast<3) ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.' : `⚠️ При текущем прогнозе через 4 квартала Чистый долг / EBITDA = ${levForecast.toFixed(2)}x → требуется снижение долга или рост EBITDA.`;
         verdictForward.innerText = forwardVerdict;
     }
     
@@ -677,5 +677,260 @@ preparePrettyNumberInputs();
     stressEbitdaVal.innerText = stressEbitdaSlider.value+'%';
     stressRateVal.innerText = '+'+stressRateSlider.value+' п.п.';
 </script>
+
+<script>
+/* ===== Mobile-safe calculation override ===== */
+(function(){
+    const LIMIT_LEV = 3.0;
+    const LIMIT_ICR = 2.0;
+
+    function el(id){ return document.getElementById(id); }
+
+    function readNumber(idOrEl) {
+        const node = typeof idOrEl === 'string' ? el(idOrEl) : idOrEl;
+        if (!node) return 0;
+        const raw = String(node.value || '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\s/g, '')
+            .replace(',', '.')
+            .replace(/[^0-9.\-]/g, '');
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    function formatMoney(v) {
+        return new Intl.NumberFormat('ru-RU').format(Math.round(Number(v) || 0)).replace(/\u00A0/g, ' ');
+    }
+
+    function formatRatio(v, digits=2) {
+        if (!Number.isFinite(v)) return '∞';
+        return v.toFixed(digits) + 'x';
+    }
+
+    function setText(id, text) {
+        const node = el(id);
+        if (node) node.innerText = text;
+    }
+
+    function calcBase() {
+        const netIncome = readNumber('netIncome');
+        const interestExp = readNumber('interestExp');
+        const taxes = readNumber('taxes');
+        const depreciation = readNumber('depreciation');
+        const equity = readNumber('equity') || 1;
+
+        const shortDebt = readNumber('shortDebt');
+        const longDebt = readNumber('longDebt');
+        const cash = readNumber('cash');
+        const leaseAdj = readNumber('leaseAdj');
+        const avgRate = readNumber('avgRate');
+
+        const ebitda = netIncome + interestExp + taxes + depreciation;
+        const grossDebt = shortDebt + longDebt + leaseAdj;
+        const netDebt = grossDebt - cash;
+        const interestCalc = grossDebt * (avgRate / 100);
+
+        const lev = ebitda > 0 ? netDebt / ebitda : 999;
+        const icr = interestExp > 0 ? ebitda / interestExp : 999;
+        const d2e = equity > 0 ? netDebt / equity : 0;
+
+        return {interestExp, equity, avgRate, ebitda, grossDebt, netDebt, interestCalc, lev, icr, d2e};
+    }
+
+    window.updateFactAndDerived = function() {
+        const b = calcBase();
+
+        setText('factEbitda', formatMoney(b.ebitda) + ' тыс. руб');
+
+        const levNode = el('factLev');
+        if (levNode) {
+            levNode.innerText = formatRatio(b.lev, 2);
+            levNode.className = b.lev < LIMIT_LEV ? 'badge pass' : 'badge fail';
+        }
+
+        const icrNode = el('factIcr');
+        if (icrNode) {
+            icrNode.innerText = formatRatio(b.icr, 2);
+            icrNode.className = b.icr >= LIMIT_ICR ? 'badge pass' : 'badge fail';
+        }
+
+        const d2eNode = el('factD2E');
+        if (d2eNode) {
+            d2eNode.innerText = formatRatio(b.d2e, 2);
+            d2eNode.className = b.d2e < 1 ? 'badge pass' : 'badge warn';
+        }
+
+        const headroom = b.lev >= LIMIT_LEV ? 0 : Math.max(0, (LIMIT_LEV - b.lev) / LIMIT_LEV * 100);
+        const fill = el('headroomFillFact');
+        if (fill) fill.style.width = Math.min(100, headroom) + '%';
+        setText('factHeadroomText', `Запас до 3.0x: ${(LIMIT_LEV - b.lev).toFixed(2)}x (${headroom.toFixed(0)}% от лимита)`);
+
+        const verdict = el('verdictFact');
+        if (verdict) {
+            verdict.innerText = (b.lev < LIMIT_LEV && b.icr >= LIMIT_ICR)
+                ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.'
+                : (b.lev >= LIMIT_LEV
+                    ? '⚠️ НАРУШЕНИЕ: Чистый долг / EBITDA > 3.0x, требуется waiver или рефинансирование.'
+                    : '⚠️ Низкое процентное покрытие, риск ковенанта.');
+        }
+
+        return b;
+    };
+
+    window.updateDebtPanel = function() {
+        const b = calcBase();
+        setText('grossDebt', formatMoney(b.grossDebt));
+        setText('netDebtCalc', formatMoney(b.netDebt));
+        setText('annualInterestPay', formatMoney(b.interestCalc) + ' тыс. руб (оценочно)');
+        return b;
+    };
+
+    window.updateStressAndForecast = function() {
+        const b = window.updateFactAndDerived();
+
+        const stressPct = readNumber('stressEbitda') / 100;
+        const stressRatePp = readNumber('stressRate');
+        const stressedEbitda = b.ebitda * (1 + stressPct);
+        const stressedInterest = b.grossDebt * ((b.avgRate + stressRatePp) / 100);
+        const stressedLev = stressedEbitda > 0 ? b.netDebt / stressedEbitda : 999;
+        const stressedIcr = stressedInterest > 0 ? stressedEbitda / stressedInterest : 999;
+
+        setText('stressedEbitda', formatMoney(stressedEbitda));
+        setText('stressedLev', formatRatio(stressedLev, 2));
+        setText('stressedIcr', formatRatio(stressedIcr, 2));
+
+        const stressFail = stressedLev >= LIMIT_LEV || stressedIcr < LIMIT_ICR;
+        const stressBadge = el('stressBadge');
+        if (stressBadge) {
+            stressBadge.innerText = stressFail ? '❌ Ковенант нарушен' : '✅ Остаётся в норме';
+            stressBadge.className = stressFail ? 'badge fail' : 'badge pass';
+        }
+
+        const headroomStress = Math.max(0, LIMIT_LEV - stressedLev).toFixed(2);
+        setText('headroomStress', headroomStress + 'x до лимита');
+        setText('stressComment', stressFail
+            ? `🚨 В стресс-сценарии Чистый долг / EBITDA = ${stressedLev.toFixed(2)}x, ICR = ${stressedIcr.toFixed(2)}x.`
+            : `Стресс-тест пройден: запас ${headroomStress}x.`);
+
+        const growthQ = readNumber('fcastGrowth') / 100;
+        const newDebt = readNumber('newDebt');
+        const repayment = readNumber('repayment');
+        const deltaRatePp = readNumber('deltaRate');
+
+        const ebitdaForecast = b.ebitda * Math.pow(1 + growthQ, 4);
+        const netDebtForecast = b.netDebt + newDebt - repayment;
+        const grossDebtForecast = b.grossDebt + newDebt - repayment;
+        const interestForecast = grossDebtForecast * ((b.avgRate + deltaRatePp) / 100);
+        const levForecast = ebitdaForecast > 0 ? netDebtForecast / ebitdaForecast : 999;
+        const icrForecast = interestForecast > 0 ? ebitdaForecast / interestForecast : 999;
+
+        setText('fcastEbitda', formatMoney(ebitdaForecast));
+        setText('fcastNetDebt', formatMoney(netDebtForecast));
+        setText('fcastLev', formatRatio(levForecast, 2));
+
+        const fcastOk = levForecast < LIMIT_LEV && icrForecast >= LIMIT_ICR;
+        const fcastBadge = el('fcastBadge');
+        if (fcastBadge) {
+            fcastBadge.innerText = fcastOk ? '✅ Прогноз соблюдает' : '⚠️ Риск нарушения';
+            fcastBadge.className = fcastOk ? 'badge pass' : 'badge fail';
+        }
+
+        const headroomFcast = levForecast >= LIMIT_LEV ? 0 : Math.max(0, (LIMIT_LEV - levForecast) / LIMIT_LEV * 100);
+        const fillFcast = el('headroomFillFcast');
+        if (fillFcast) fillFcast.style.width = Math.min(100, headroomFcast) + '%';
+        setText('headroomFcastText', `Запас до 3.0x: ${(LIMIT_LEV - levForecast).toFixed(2)}x (${headroomFcast.toFixed(0)}% от лимита)`);
+
+        setText('verdictForward', fcastOk
+            ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.'
+            : `⚠️ При текущем прогнозе: Чистый долг / EBITDA = ${levForecast.toFixed(2)}x, ICR = ${icrForecast.toFixed(2)}x. Требуется снижение долга или рост EBITDA.`);
+
+        return { ...b, stressedEbitda, stressedLev, stressedIcr, ebitdaForecast, netDebtForecast, levForecast, icrForecast };
+    };
+
+    function formatInputValue(node) {
+        if (!node || node.type === 'range') return;
+        const raw = String(node.value || '').replace(/\u00A0/g, ' ').replace(/\s/g, '').replace(',', '.');
+        if (raw === '' || raw === '-') return;
+
+        const decimalIds = ['avgRate', 'deltaRate', 'fcastGrowth'];
+        const allowDecimal = decimalIds.includes(node.id);
+        let cleaned = raw.replace(allowDecimal ? /[^0-9.\-]/g : /[^0-9\-]/g, '');
+        if (cleaned === '' || cleaned === '-') return;
+
+        const negative = cleaned.startsWith('-');
+        cleaned = cleaned.replace(/\-/g, '');
+        if (negative) cleaned = '-' + cleaned;
+
+        let parts = cleaned.split('.');
+        let intPart = parts[0].replace('-', '').replace(/^0+(?=\d)/, '');
+        let decPart = parts[1];
+
+        const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        node.value = (negative ? '-' : '') + grouped + (allowDecimal && decPart !== undefined ? ',' + decPart.slice(0, 2) : '');
+    }
+
+    function recalcAll() {
+        window.updateFactAndDerived();
+        window.updateDebtPanel();
+        window.updateStressAndForecast();
+
+        const stressEbitdaVal = el('stressEbitdaVal');
+        const stressRateVal = el('stressRateVal');
+        if (stressEbitdaVal) stressEbitdaVal.innerText = readNumber('stressEbitda') + '%';
+        if (stressRateVal) stressRateVal.innerText = '+' + readNumber('stressRate') + ' п.п.';
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+        if (input.type !== 'range') {
+            input.setAttribute('inputmode', input.id === 'avgRate' || input.id === 'deltaRate' || input.id === 'fcastGrowth' ? 'decimal' : 'numeric');
+            input.setAttribute('autocomplete', 'off');
+            formatInputValue(input);
+            input.addEventListener('input', function(){
+                formatInputValue(this);
+                try { this.setSelectionRange(this.value.length, this.value.length); } catch(e) {}
+                recalcAll();
+            });
+            input.addEventListener('blur', function(){
+                formatInputValue(this);
+                recalcAll();
+            });
+        } else {
+            input.addEventListener('input', recalcAll);
+        }
+    });
+
+    const syncBtn = el('syncDebtBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', function(){
+            const b = calcBase();
+            const interestInput = el('interestExp');
+            if (interestInput) {
+                interestInput.value = String(Math.round(b.interestCalc));
+                formatInputValue(interestInput);
+            }
+            recalcAll();
+        });
+    }
+
+    if (document.querySelector('.tabs')) {
+        document.querySelector('.tabs').addEventListener('click', function(e){
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            e.preventDefault();
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active-pane'));
+
+            btn.classList.add('active');
+            const pane = el(btn.dataset.tab + 'Pane');
+            if (pane) pane.classList.add('active-pane');
+            recalcAll();
+        });
+    }
+
+    recalcAll();
+})();
+</script>
+
 </body>
 </html>
