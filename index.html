@@ -19,6 +19,15 @@
             margin: 0 auto;
         }
         /* tabs */
+
+        .tab-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab-pane.active-pane {
+            display: block !important;
+        }
+
         .tabs {
             display: flex;
             gap: 8px;
@@ -100,6 +109,32 @@
             flex: 1;
             min-width: 140px;
         }
+
+        .field-wrap {
+            flex: 1;
+            min-width: 180px;
+        }
+        .field-wrap input {
+            width: 100%;
+        }
+        .field-note {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            color: #6b8394;
+        }
+        .section-note {
+            background: #f8fafd;
+            border: 1px dashed #cbdde9;
+            color: #3d6b80;
+            border-radius: 18px;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
         .metric-big {
             font-size: 2rem;
             font-weight: 800;
@@ -167,6 +202,77 @@
             font-size: 0.9rem;
             font-weight: 500;
         }
+
+        input[data-money], input[data-rate], input[data-percent] {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+        }
+        @media (max-width: 700px) {
+            body {
+                padding: 14px 10px;
+            }
+            .tabs {
+                gap: 6px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 10px;
+            }
+            .tab-btn {
+                flex: 0 0 auto;
+                padding: 10px 14px;
+                font-size: 0.82rem;
+                white-space: nowrap;
+            }
+            .grid-2col {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            .card {
+                border-radius: 20px;
+                padding: 14px;
+            }
+            .card-header {
+                font-size: 1rem;
+                margin-bottom: 14px;
+            }
+            .input-row {
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .input-row label {
+                width: 100%;
+                min-width: 0;
+                font-size: 0.82rem;
+            }
+            .field-wrap {
+                width: 100%;
+                min-width: 0;
+            }
+            input, select {
+                width: 100%;
+                min-width: 0;
+                flex: none;
+                font-size: 1rem;
+                padding: 12px 14px;
+                border-radius: 14px;
+            }
+            input[data-money], input[data-rate], input[data-percent] {
+                font-size: 1.08rem;
+            }
+            input[type="range"] {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .metric-big {
+                font-size: 1.55rem;
+                word-break: break-word;
+            }
+            .section-note, .field-note, .verdict {
+                font-size: 0.78rem;
+            }
+        }
+
         @media (max-width: 700px) {
             .input-row { flex-direction: column; align-items: flex-start; }
             .card { padding: 16px; }
@@ -191,11 +297,12 @@
         <div class="grid-2col">
             <div class="card">
                 <div class="card-header">📊 Базовые финансовые показатели (LTM)</div>
-                <div class="input-row"><label>Чистая прибыль (тыс. руб)</label><input type="number" id="netIncome" value="4250000"></div>
-                <div class="input-row"><label>Проценты к уплате (тыс. руб)</label><input type="number" id="interestExp" value="520000"></div>
-                <div class="input-row"><label>Налог на прибыль (тыс. руб)</label><input type="number" id="taxes" value="1080000"></div>
-                <div class="input-row"><label>Амортизация (D&A, тыс. руб)</label><input type="number" id="depreciation" value="890000"></div>
-                <div class="input-row"><label>Собственный капитал (тыс. руб)</label><input type="number" id="equity" value="18500000"></div>
+                <div class="section-note">Все суммы вводятся в <strong>тыс. руб.</strong> за последние 12 месяцев / 4 квартала (LTM), если не указано иначе.</div>
+                <div class="input-row"><label>Чистая прибыль за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="netIncome" value="4250000"><span class="field-note">Итоговая прибыль после налогов за последние 12 месяцев. Используется для расчёта EBITDA.</span></div></div>
+                <div class="input-row"><label>Проценты к уплате за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="interestExp" value="520000"><span class="field-note">Фактические процентные расходы по кредитам/займам за LTM. Нужны для ICR = EBITDA / проценты.</span></div></div>
+                <div class="input-row"><label>Налог на прибыль за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="taxes" value="1080000"><span class="field-note">Начисленный налог на прибыль за LTM. Добавляется обратно при расчёте EBITDA.</span></div></div>
+                <div class="input-row"><label>Амортизация D&A за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="depreciation" value="890000"><span class="field-note">Амортизация основных средств и НМА за LTM. Добавляется обратно к прибыли.</span></div></div>
+                <div class="input-row"><label>Собственный капитал на отчётную дату (тыс. руб)</label><div class="field-wrap"><input type="number" id="equity" value="18500000"><span class="field-note">Балансовый капитал на конец периода. Используется для Net Debt / Equity.</span></div></div>
             </div>
             <div class="card">
                 <div class="card-header">📈 Фактические ковенанты</div>
@@ -215,19 +322,20 @@
         <div class="grid-2col">
             <div class="card">
                 <div class="card-header">🏛️ Структура долга</div>
-                <div class="input-row"><label>Краткосрочный долг (тыс. руб)</label><input type="number" id="shortDebt" value="3200000"></div>
-                <div class="input-row"><label>Долгосрочный долг (тыс. руб)</label><input type="number" id="longDebt" value="9500000"></div>
-                <div class="input-row"><label>Денежные средства (тыс. руб)</label><input type="number" id="cash" value="1500000"></div>
-                <div class="input-row"><label>Средневзвеш. ставка (% , фактич.)</label><input type="number" id="avgRate" value="12.5" step="0.5"></div>
-                <div class="input-row"><label>Операционный лизинг (тыс. руб) *</label><input type="number" id="leaseAdj" value="0" placeholder="добавить к долгу"></div>
+                <div class="section-note">Здесь вводится структура долга на отчётную дату. Net Debt = краткосрочный долг + долгосрочный долг + лизинг − денежные средства.</div>
+                <div class="input-row"><label>Краткосрочный долг (тыс. руб)</label><div class="field-wrap"><input type="number" id="shortDebt" value="3200000"><span class="field-note">Кредиты, займы и текущая часть долга со сроком погашения до 12 месяцев.</span></div></div>
+                <div class="input-row"><label>Долгосрочный долг (тыс. руб)</label><div class="field-wrap"><input type="number" id="longDebt" value="9500000"><span class="field-note">Кредиты, облигации и займы со сроком погашения более 12 месяцев.</span></div></div>
+                <div class="input-row"><label>Денежные средства (тыс. руб)</label><div class="field-wrap"><input type="number" id="cash" value="1500000"><span class="field-note">Деньги и эквиваленты, которые уменьшают чистый долг.</span></div></div>
+                <div class="input-row"><label>Средневзвеш. ставка (% годовых)</label><div class="field-wrap"><input type="number" id="avgRate" value="12.5" step="0.5"><span class="field-note">Средняя годовая ставка по долгу. Например: 12.5 означает 12,5% годовых.</span></div></div>
+                <div class="input-row"><label>Операционный лизинг / IFRS 16 (тыс. руб)</label><div class="field-wrap"><input type="number" id="leaseAdj" value="0" placeholder="добавить к долгу"><span class="field-note">Дополнительная долговая корректировка по аренде/лизингу, если банк включает её в ковенантный долг.</span></div></div>
             </div>
             <div class="card">
                 <div class="card-header">🧾 Расчётный чистый долг</div>
                 <div><span class="metric-small">Total Gross Debt</span><div class="metric-big" id="grossDebt">—</div></div>
                 <div><span class="metric-small">Чистый долг (Net Debt)</span><div class="metric-big" id="netDebtCalc">—</div></div>
-                <div><span class="metric-small">Годовые проценты (поток)</span><div id="annualInterestPay" style="font-weight:700">—</div></div>
+                <div><span class="metric-small">Годовые проценты по gross debt</span><div id="annualInterestPay" style="font-weight:700">—</div></div>
                 <div class="metric-small">*лизинг увеличивает скорректированный долг (IFRS 16)</div>
-                <button id="syncDebtBtn" class="outline" style="margin-top:12px">⟳ Синхронизировать с фактом (Net Debt)</button>
+                <button id="syncDebtBtn" class="outline" style="margin-top:12px">⟳ Обновить проценты из долга и ставки</button>
             </div>
         </div>
     </div>
@@ -238,8 +346,8 @@
             <div class="card">
                 <div class="card-header">⚡ Сценарии ухудшения</div>
                 <div class="sensitivity-group">
-                    <div class="input-row"><label>Изменение выручки/EBITDA margin</label><input type="range" id="stressEbitda" min="-40" max="0" value="-15" step="5"> <span id="stressEbitdaVal">-15%</span></div>
-                    <div class="input-row"><label>Рост ставки (процентных расходов)</label><input type="range" id="stressRate" min="0" max="5" value="2" step="0.5"> <span id="stressRateVal">+2%</span></div>
+                    <div class="input-row"><label>Снижение EBITDA в стресс-сценарии</label><div class="field-wrap"><input type="range" id="stressEbitda" min="-40" max="0" value="-15" step="5"> <span id="stressEbitdaVal">-15%</span><span class="field-note">На сколько процентов EBITDA ухудшится относительно фактической LTM EBITDA.</span></div></div>
+                    <div class="input-row"><label>Рост ставки, п.п.</label><div class="field-wrap"><input type="range" id="stressRate" min="0" max="5" value="2" step="0.5"> <span id="stressRateVal">+2 п.п.</span><span class="field-note">П.п. = процентные пункты. Например, 12,5% + 2 п.п. = 14,5% годовых.</span></div></div>
                 </div>
                 <div class="verdict" id="stressComment">Примените стресс, чтобы увидеть нарушение ковенантов</div>
             </div>
@@ -258,10 +366,11 @@
         <div class="grid-2col">
             <div class="card">
                 <div class="card-header">📆 Прогнозные параметры (4 квартала)</div>
-                <div class="input-row"><label>Рост EBITDA (квартальный, %)</label><input type="number" id="fcastGrowth" value="2" step="1"></div>
-                <div class="input-row"><label>Новый долг (привлечение, тыс. руб)</label><input type="number" id="newDebt" value="0"></div>
-                <div class="input-row"><label>Погашение долга (тыс. руб)</label><input type="number" id="repayment" value="400000"></div>
-                <div class="input-row"><label>Изменение ставки (% пунктов)</label><input type="number" id="deltaRate" value="0" step="0.5"></div>
+                <div class="section-note">Прогноз считается на 4 квартала вперёд. Рост EBITDA применяется поквартально: EBITDA × (1 + рост)^4.</div>
+                <div class="input-row"><label>Рост EBITDA в квартал (%)</label><div class="field-wrap"><input type="number" id="fcastGrowth" value="2" step="1"><span class="field-note">Ожидаемый квартальный рост EBITDA. Например: 2 означает +2% каждый квартал.</span></div></div>
+                <div class="input-row"><label>Новый долг / привлечение (тыс. руб)</label><div class="field-wrap"><input type="number" id="newDebt" value="0"><span class="field-note">Сумма нового финансирования, которая увеличит Net Debt в прогнозе.</span></div></div>
+                <div class="input-row"><label>Погашение долга за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="repayment" value="400000"><span class="field-note">Плановое погашение основного долга, которое уменьшит Net Debt.</span></div></div>
+                <div class="input-row"><label>Изменение ставки, п.п.</label><div class="field-wrap"><input type="number" id="deltaRate" value="0" step="0.5"><span class="field-note">Изменение годовой ставки в прогнозе. Например: 1.5 = ставка вырастет на 1,5 п.п.</span></div></div>
             </div>
             <div class="card">
                 <div class="card-header">🔮 Forward Covenant Headroom</div>
@@ -327,31 +436,39 @@
     const stressEbitdaVal = document.getElementById('stressEbitdaVal');
     const stressRateVal = document.getElementById('stressRateVal');
 
+
+    function num(el) {
+        if (!el) return 0;
+        const raw = String(el.value || '').replace(/\s/g, '').replace(',', '.');
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : 0;
+    }
+
     function formatMoney(v) { return new Intl.NumberFormat('ru-RU').format(Math.round(v)); }
     function formatRatio(v, digits=2) { if(v===undefined || !isFinite(v)) return '∞'; return v.toFixed(digits)+'x'; }
     
     // основные расчёты факта
     function calcEbitda() {
-        let ni = parseFloat(netIncome.value) || 0;
-        let int = parseFloat(interestExp.value) || 0;
-        let tax = parseFloat(taxes.value) || 0;
-        let da = parseFloat(depreciation.value) || 0;
+        let ni = num(netIncome);
+        let int = num(interestExp);
+        let tax = num(taxes);
+        let da = num(depreciation);
         return ni + int + tax + da;
     }
     function getNetDebtFromInputs() {
-        let short = parseFloat(shortDebt.value) || 0;
-        let long = parseFloat(longDebt.value) || 0;
-        let cashVal = parseFloat(cash.value) || 0;
-        let lease = parseFloat(leaseAdj.value) || 0;
+        let short = num(shortDebt);
+        let long = num(longDebt);
+        let cashVal = num(cash);
+        let lease = num(leaseAdj);
         return (short+long+lease) - cashVal;
     }
-    function getGrossDebt() { return (parseFloat(shortDebt.value)||0)+(parseFloat(longDebt.value)||0)+(parseFloat(leaseAdj.value)||0); }
+    function getGrossDebt() { return num(shortDebt)+num(longDebt)+num(leaseAdj); }
     
     function updateFactAndDerived() {
         let ebitda = calcEbitda();
         let netDebt = getNetDebtFromInputs();
-        let equity = parseFloat(equityEl.value) || 1;
-        let interest = parseFloat(interestExp.value) || 0;
+        let equity = num(equityEl) || 1;
+        let interest = num(interestExp);
         factEbitdaSpan.innerText = formatMoney(ebitda)+' тыс. руб';
         let lev = (ebitda>0) ? netDebt/ebitda : (netDebt>0 ? 999 : 0);
         let icr = (interest>0) ? ebitda/interest : (ebitda>0 ? 999 : 0);
@@ -371,18 +488,19 @@
     function updateDebtPanel() {
         let gross = getGrossDebt();
         let netD = getNetDebtFromInputs();
-        let rate = (parseFloat(avgRate.value)||0)/100;
-        let interestCalc = netD * rate; // расчётные проценты на основе чистого долга (упрощённо)
+        let rate = num(avgRate)/100;
+        let interestCalc = gross * rate; // проценты считаем от gross debt, т.к. банк начисляет проценты на валовой долг
         grossDebtSpan.innerText = formatMoney(gross);
         netDebtCalcSpan.innerText = formatMoney(netD);
         annualInterestPaySpan.innerText = formatMoney(interestCalc) + ' тыс. руб (оценочно)';
     }
     
     function syncNetDebtToFact() {
-        // переносим чистый долг в компоненты (упрощённо: увеличим долгосрочный)
-        let currentNet = getNetDebtFromInputs();
-        let targetNet = (()=>{ let s=parseFloat(shortDebt.value)||0; let l=parseFloat(longDebt.value)||0; let c=parseFloat(cash.value)||0; return (s+l)-c; })();
-        // ничего не делаем авто, но просто обновим панель
+        // Обновляем фактические процентные расходы на основе gross debt и средней ставки.
+        // Net Debt остаётся производным показателем из структуры долга и cash.
+        let gross = getGrossDebt();
+        let rate = num(avgRate)/100;
+        interestExp.value = Math.round(gross * rate);
         updateDebtPanel();
         updateFactAndDerived();
         updateStressAndForecast();
@@ -393,10 +511,12 @@
         let ebitdaBase = base.ebitda;
         let interestBase = base.interest;
         let netDebtBase = getNetDebtFromInputs();
-        let stressPct = (parseFloat(stressEbitdaSlider.value)||0)/100;
+        let stressPct = num(stressEbitdaSlider)/100;
         let stressedEbitda = ebitdaBase * (1+stressPct);
-        let rateShift = (parseFloat(stressRateSlider.value)||0)/100;
-        let stressedInterest = interestBase * (1+rateShift);
+        let baseRate = num(avgRate)/100;
+        let rateShift = num(stressRateSlider)/100; // п.п. к годовой ставке
+        let stressedRate = Math.max(0, baseRate + rateShift);
+        let stressedInterest = getGrossDebt() * stressedRate;
         let stressedLev = (stressedEbitda>0) ? netDebtBase/stressedEbitda : 999;
         let stressedIcr = (stressedInterest>0) ? stressedEbitda/stressedInterest : 999;
         stressedEbitdaSpan.innerText = formatMoney(stressedEbitda);
@@ -407,16 +527,18 @@
         stressBadgeSpan.className = stressFail ? 'badge fail' : 'badge pass';
         let headroomStress = Math.max(0, 3-stressedLev).toFixed(2);
         headroomStressSpan.innerText = headroomStress+'x до лимита';
-        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки Долг/EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x.`;
+        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки на ${Math.round(rateShift*1000)/10} п.п. Долг/EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x. ICR пересчитан по ставке ${(stressedRate*100).toFixed(1)}%.`;
         
         // Forecast
-        let growthQ = (parseFloat(fcastGrowth.value)||0)/100;
-        let ebitdaForecast = ebitdaBase * (1+growthQ);
-        let newD = (parseFloat(newDebtInput.value)||0);
-        let repay = (parseFloat(repaymentInput.value)||0);
-        let deltaR = (parseFloat(deltaRate.value)||0)/100;
+        let growthQ = num(fcastGrowth)/100;
+        let ebitdaForecast = ebitdaBase * Math.pow(1+growthQ, 4); // 4 квартала с капитализацией квартального роста
+        let newD = num(newDebtInput);
+        let repay = num(repaymentInput);
+        let deltaR = num(deltaRate)/100; // п.п. к годовой ставке
         let netDebtForecast = netDebtBase + newD - repay;
-        let interestForecast = interestBase * (1+deltaR);
+        let forecastRate = Math.max(0, (num(avgRate)/100) + deltaR);
+        let grossDebtForecast = Math.max(0, getGrossDebt() + newD - repay);
+        let interestForecast = grossDebtForecast * forecastRate;
         let levForecast = (ebitdaForecast>0) ? netDebtForecast/ebitdaForecast : 999;
         fcastEbitdaSpan.innerText = formatMoney(ebitdaForecast);
         fcastNetDebtSpan.innerText = formatMoney(netDebtForecast);
@@ -444,21 +566,116 @@
     stressEbitdaSlider.addEventListener('input', () => stressEbitdaVal.innerText = stressEbitdaSlider.value+'%');
     stressRateSlider.addEventListener('input', () => stressRateVal.innerText = '+'+stressRateSlider.value+'%');
     
-    // tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active-pane'));
-            document.getElementById(btn.dataset.tab+'Pane').classList.add('active-pane');
+    // tabs — работает и на мобильных браузерах
+    function openTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active-pane'));
+
+        const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        const activePane = document.getElementById(tabName + 'Pane');
+
+        if (activeBtn) activeBtn.classList.add('active');
+        if (activePane) activePane.classList.add('active-pane');
+
+        setTimeout(() => {
+            updateFactAndDerived();
+            updateDebtPanel();
+            updateStressAndForecast();
+        }, 0);
+    }
+
+    document.querySelector('.tabs').addEventListener('click', function(e) {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        e.preventDefault();
+        openTab(btn.dataset.tab);
+    });
+
+    document.querySelector('.tabs').addEventListener('touchend', function(e) {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        e.preventDefault();
+        openTab(btn.dataset.tab);
+    }, { passive: false });
+    
+const moneyInputIds = [
+    'netIncome','interestExp','taxes','depreciation','equity',
+    'shortDebt','longDebt','cash','leaseAdj','newDebt','repayment'
+];
+const decimalInputIds = ['avgRate','deltaRate','fcastGrowth'];
+
+function normalizeNumericText(value, allowDecimal=false) {
+    let raw = String(value || '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s/g, '')
+        .replace(',', '.');
+
+    raw = raw.replace(allowDecimal ? /[^0-9.\-]/g : /[^0-9\-]/g, '');
+
+    const isNegative = raw.startsWith('-');
+    raw = raw.replace(/\-/g, '');
+    if (isNegative) raw = '-' + raw;
+
+    if (allowDecimal) {
+        const parts = raw.split('.');
+        raw = parts.shift() + (parts.length ? '.' + parts.join('') : '');
+    }
+    return raw;
+}
+
+function formatNumericInput(el) {
+    const allowDecimal = decimalInputIds.includes(el.id);
+    let raw = normalizeNumericText(el.value, allowDecimal);
+
+    if (raw === '' || raw === '-') {
+        el.value = raw;
+        return;
+    }
+
+    let [intPart, decPart] = raw.split('.');
+    const isNegative = intPart.startsWith('-');
+    intPart = intPart.replace('-', '');
+
+    // Убираем лишние нули слева, но оставляем один ноль
+    intPart = intPart.replace(/^0+(?=\d)/, '');
+
+    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    el.value = (isNegative ? '-' : '') + grouped + (allowDecimal && decPart !== undefined ? ',' + decPart.slice(0, 2) : '');
+}
+
+function preparePrettyNumberInputs() {
+    document.querySelectorAll('input[type="number"]').forEach(el => {
+        el.type = 'text';
+        el.inputMode = 'decimal';
+        el.autocomplete = 'off';
+
+        if (moneyInputIds.includes(el.id)) {
+            el.dataset.money = 'true';
+            el.inputMode = 'numeric';
+        } else if (['avgRate','deltaRate'].includes(el.id)) {
+            el.dataset.rate = 'true';
+        } else if (['fcastGrowth'].includes(el.id)) {
+            el.dataset.percent = 'true';
+        }
+
+        formatNumericInput(el);
+        el.addEventListener('input', () => {
+            formatNumericInput(el);
+            updateFactAndDerived();
+            updateDebtPanel();
+            updateStressAndForecast();
         });
     });
+}
+preparePrettyNumberInputs();
+
+
     // init
     updateFactAndDerived();
     updateDebtPanel();
     updateStressAndForecast();
     stressEbitdaVal.innerText = stressEbitdaSlider.value+'%';
-    stressRateVal.innerText = '+'+stressRateSlider.value+'%';
+    stressRateVal.innerText = '+'+stressRateSlider.value+' п.п.';
 </script>
 </body>
 </html>
