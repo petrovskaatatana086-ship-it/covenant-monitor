@@ -277,6 +277,38 @@
             .input-row { flex-direction: column; align-items: flex-start; }
             .card { padding: 16px; }
         }
+    
+        .covenant-scale {
+            position: relative;
+            height: 14px;
+            border-radius: 20px;
+            margin: 14px 0 10px;
+            background:
+                linear-gradient(
+                    to right,
+                    #22c55e 0%,
+                    #22c55e 66.666%,
+                    #f59e0b 66.666%,
+                    #f59e0b 90%,
+                    #ef4444 90%,
+                    #ef4444 100%
+                );
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        }
+
+        .scale-marker {
+            position: absolute;
+            top: 50%;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+            transform: translate(-50%, -50%);
+            transition: left 0.2s ease;
+        }
+
     </style>
 </head>
 <body>
@@ -373,11 +405,13 @@
                 <div class="input-row"><label>Изменение ставки, п.п.</label><div class="field-wrap"><input type="number" id="deltaRate" value="0" step="0.5"><span class="field-note">Изменение годовой ставки в прогнозе. Например: 1.5 = ставка вырастет на 1,5 п.п.</span></div></div>
             </div>
             <div class="card">
-                <div class="card-header">🔮 Forward Covenant Headroom</div>
-                <div>Прогнозная EBITDA (4 кв): <strong id="fcastEbitda">—</strong></div>
+                <div class="card-header">🔮 Прогнозный запас по ковенанту</div>
+                <div>Прогнозная EBITDA (12 мес.): <strong id="fcastEbitda">—</strong></div>
                 <div>Прогнозный Net Debt: <strong id="fcastNetDebt">—</strong></div>
                 <div>Чистый долг / EBITDA прогноз: <strong id="fcastLev">—</strong> <span id="fcastBadge" class="badge"></span></div>
-                <div class="progress-bar mt-2"><div class="progress-fill" id="headroomFillFcast" style="width:0%"></div></div>
+                <div class="covenant-scale" aria-label="Шкала использования лимита Чистый долг / EBITDA">
+        <div class="scale-marker" id="fcastScaleMarker" style="left:0%"></div>
+    </div>
                 <div id="headroomFcastText" class="metric-small">Запас до лимита 3.0x: —</div>
             </div>
         </div>
@@ -491,7 +525,7 @@
         setText(
             'factHeadroomText',
             Number.isFinite(headroomX)
-                ? `Запас до 3,0x: ${headroomX.toFixed(2)}x (${headroomPct.toFixed(0)}% от лимита)`
+                ? `Запас до лимита: ${Math.max(0, headroomX).toFixed(2)}x • Использовано лимита: ${Math.max(0, b.lev / LIMIT_LEV * 100).toFixed(0)}%`
                 : 'Запас до 3,0x: расчёт невозможен'
         );
 
@@ -576,18 +610,19 @@
         );
 
         const forecastHeadroomX = Number.isFinite(levForecast) ? LIMIT_LEV - levForecast : -Infinity;
-        const forecastHeadroomPct = isLevCompliant(levForecast)
-            ? Math.max(0, Math.min(100, forecastHeadroomX / LIMIT_LEV * 100))
-            : 0;
+        const usedLimitPct = Number.isFinite(levForecast)
+            ? Math.max(0, levForecast / LIMIT_LEV * 100)
+            : 100;
+        const markerPct = Math.max(0, Math.min(100, usedLimitPct));
 
-        const fill = el('headroomFillFcast');
-        if (fill) fill.style.width = `${forecastHeadroomPct}%`;
+        const marker = el('fcastScaleMarker');
+        if (marker) marker.style.left = `${markerPct}%`;
 
         setText(
             'headroomFcastText',
             Number.isFinite(forecastHeadroomX)
-                ? `Запас до 3,0x: ${forecastHeadroomX.toFixed(2)}x (${forecastHeadroomPct.toFixed(0)}% от лимита)`
-                : 'Запас до 3,0x: расчёт невозможен'
+                ? `Запас до лимита: ${Math.max(0, forecastHeadroomX).toFixed(2)}x • Использовано лимита: ${usedLimitPct.toFixed(0)}%`
+                : 'Запас до лимита: расчёт невозможен'
         );
 
         setText(
