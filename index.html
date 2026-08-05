@@ -366,8 +366,8 @@
         <div class="grid-2col">
             <div class="card">
                 <div class="card-header">📆 Прогнозные параметры (4 квартала)</div>
-                <div class="section-note">Прогноз считается на 4 квартала вперёд. Рост EBITDA применяется поквартально: EBITDA × (1 + рост)^4.</div>
-                <div class="input-row"><label>Рост EBITDA в квартал (%)</label><div class="field-wrap"><input type="number" id="fcastGrowth" value="2" step="1"><span class="field-note">Ожидаемый квартальный рост EBITDA. Например: 2 означает +2% каждый квартал.</span></div></div>
+                <div class="section-note">Прогноз считается на 12 месяцев вперёд. Укажите ожидаемое изменение EBITDA за весь прогнозный год.</div>
+                <div class="input-row"><label>Рост EBITDA за 12 месяцев (%)</label><div class="field-wrap"><input type="number" id="fcastGrowth" value="2" step="1"><span class="field-note">Ожидаемое изменение EBITDA за весь прогнозный год. Например: 8 означает рост EBITDA на 8% за 12 месяцев.</span></div></div>
                 <div class="input-row"><label>Новый долг / привлечение (тыс. руб)</label><div class="field-wrap"><input type="number" id="newDebt" value="0"><span class="field-note">Сумма нового финансирования, которая увеличит Net Debt в прогнозе.</span></div></div>
                 <div class="input-row"><label>Погашение долга за 4 квартала (тыс. руб)</label><div class="field-wrap"><input type="number" id="repayment" value="400000"><span class="field-note">Плановое погашение основного долга, которое уменьшит Net Debt.</span></div></div>
                 <div class="input-row"><label>Изменение ставки, п.п.</label><div class="field-wrap"><input type="number" id="deltaRate" value="0" step="0.5"><span class="field-note">Изменение годовой ставки в прогнозе. Например: 1.5 = ставка вырастет на 1,5 п.п.</span></div></div>
@@ -386,310 +386,16 @@
 </div>
 
 <script>
-    // DOM elements
-    // факт
-    const netIncome = document.getElementById('netIncome');
-    const interestExp = document.getElementById('interestExp');
-    const taxes = document.getElementById('taxes');
-    const depreciation = document.getElementById('depreciation');
-    const equityEl = document.getElementById('equity');
-    // долги
-    const shortDebt = document.getElementById('shortDebt');
-    const longDebt = document.getElementById('longDebt');
-    const cash = document.getElementById('cash');
-    const avgRate = document.getElementById('avgRate');
-    const leaseAdj = document.getElementById('leaseAdj');
-    // стресс
-    const stressEbitdaSlider = document.getElementById('stressEbitda');
-    const stressRateSlider = document.getElementById('stressRate');
-    // прогноз
-    const fcastGrowth = document.getElementById('fcastGrowth');
-    const newDebtInput = document.getElementById('newDebt');
-    const repaymentInput = document.getElementById('repayment');
-    const deltaRate = document.getElementById('deltaRate');
-
-    // display fields
-    const factEbitdaSpan = document.getElementById('factEbitda');
-    const factLevSpan = document.getElementById('factLev');
-    const factIcrSpan = document.getElementById('factIcr');
-    const factD2ESpan = document.getElementById('factD2E');
-    const headroomFillFact = document.getElementById('headroomFillFact');
-    const factHeadroomText = document.getElementById('factHeadroomText');
-    const verdictFact = document.getElementById('verdictFact');
-    const grossDebtSpan = document.getElementById('grossDebt');
-    const netDebtCalcSpan = document.getElementById('netDebtCalc');
-    const annualInterestPaySpan = document.getElementById('annualInterestPay');
-    const syncBtn = document.getElementById('syncDebtBtn');
-    const stressedEbitdaSpan = document.getElementById('stressedEbitda');
-    const stressedLevSpan = document.getElementById('stressedLev');
-    const stressBadgeSpan = document.getElementById('stressBadge');
-    const stressedIcrSpan = document.getElementById('stressedIcr');
-    const headroomStressSpan = document.getElementById('headroomStress');
-    const stressCommentSpan = document.getElementById('stressComment');
-    const fcastEbitdaSpan = document.getElementById('fcastEbitda');
-    const fcastNetDebtSpan = document.getElementById('fcastNetDebt');
-    const fcastLevSpan = document.getElementById('fcastLev');
-    const fcastBadge = document.getElementById('fcastBadge');
-    const headroomFillFcast = document.getElementById('headroomFillFcast');
-    const headroomFcastText = document.getElementById('headroomFcastText');
-    const verdictForward = document.getElementById('verdictForward');
-    const stressEbitdaVal = document.getElementById('stressEbitdaVal');
-    const stressRateVal = document.getElementById('stressRateVal');
-
-
-    function num(el) {
-        if (!el) return 0;
-        const raw = String(el.value || '').replace(/\s/g, '').replace(',', '.');
-        const value = Number(raw);
-        return Number.isFinite(value) ? value : 0;
-    }
-
-    function formatMoney(v) { return new Intl.NumberFormat('ru-RU').format(Math.round(v)); }
-    function formatRatio(v, digits=2) { if(v===undefined || !isFinite(v)) return '∞'; return v.toFixed(digits)+'x'; }
-    
-    // основные расчёты факта
-    function calcEbitda() {
-        let ni = num(netIncome);
-        let int = num(interestExp);
-        let tax = num(taxes);
-        let da = num(depreciation);
-        return ni + int + tax + da;
-    }
-    function getNetDebtFromInputs() {
-        let short = num(shortDebt);
-        let long = num(longDebt);
-        let cashVal = num(cash);
-        let lease = num(leaseAdj);
-        return (short+long+lease) - cashVal;
-    }
-    function getGrossDebt() { return num(shortDebt)+num(longDebt)+num(leaseAdj); }
-    
-    function updateFactAndDerived() {
-        let ebitda = calcEbitda();
-        let netDebt = getNetDebtFromInputs();
-        let equity = num(equityEl) || 1;
-        let interest = num(interestExp);
-        factEbitdaSpan.innerText = formatMoney(ebitda)+' тыс. руб';
-        let lev = (ebitda>0) ? netDebt/ebitda : (netDebt>0 ? 999 : 0);
-        let icr = (interest>0) ? ebitda/interest : (ebitda>0 ? 999 : 0);
-        let d2e = (equity>0) ? netDebt/equity : 0;
-        factLevSpan.innerText = formatRatio(lev,2); factLevSpan.className = (lev<3 ? 'badge pass' : 'badge fail');
-        factIcrSpan.innerText = formatRatio(icr,2); factIcrSpan.className = (icr>=2 ? 'badge pass' : 'badge fail');
-        factD2ESpan.innerText = formatRatio(d2e,2); factD2ESpan.className = (d2e<1 ? 'badge pass' : 'badge warn');
-        let headroom = Math.max(0, (3 - lev)/3 * 100);
-        if(lev>=3) headroom=0;
-        headroomFillFact.style.width = Math.min(100, headroom)+'%';
-        factHeadroomText.innerText = `Запас до 3.0x: ${(3-lev).toFixed(2)}x (${headroom.toFixed(0)}% от лимита)`;
-        let verdictText = (lev<3 && icr>=2) ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.' : (lev>=3 ? '⚠️ НАРУШЕНИЕ: Чистый долг / EBITDA > 3.0x, требуется waiver или рефинансирование.' : '⚠️ Низкое процентное покрытие, риск ковенанта.');
-        verdictFact.innerText = verdictText;
-        return {ebitda, netDebt, interest, lev, icr};
-    }
-    
-    function updateDebtPanel() {
-        let gross = getGrossDebt();
-        let netD = getNetDebtFromInputs();
-        let rate = num(avgRate)/100;
-        let interestCalc = gross * rate; // проценты считаем от gross debt, т.к. банк начисляет проценты на валовой долг
-        grossDebtSpan.innerText = formatMoney(gross);
-        netDebtCalcSpan.innerText = formatMoney(netD);
-        annualInterestPaySpan.innerText = formatMoney(interestCalc) + ' тыс. руб (оценочно)';
-    }
-    
-    function syncNetDebtToFact() {
-        // Обновляем фактические процентные расходы на основе gross debt и средней ставки.
-        // Net Debt остаётся производным показателем из структуры долга и cash.
-        let gross = getGrossDebt();
-        let rate = num(avgRate)/100;
-        interestExp.value = Math.round(gross * rate);
-        updateDebtPanel();
-        updateFactAndDerived();
-        updateStressAndForecast();
-    }
-    
-    function updateStressAndForecast() {
-        let base = updateFactAndDerived();
-        let ebitdaBase = base.ebitda;
-        let interestBase = base.interest;
-        let netDebtBase = getNetDebtFromInputs();
-        let stressPct = num(stressEbitdaSlider)/100;
-        let stressedEbitda = ebitdaBase * (1+stressPct);
-        let baseRate = num(avgRate)/100;
-        let rateShift = num(stressRateSlider)/100; // п.п. к годовой ставке
-        let stressedRate = Math.max(0, baseRate + rateShift);
-        let stressedInterest = getGrossDebt() * stressedRate;
-        let stressedLev = (stressedEbitda>0) ? netDebtBase/stressedEbitda : 999;
-        let stressedIcr = (stressedInterest>0) ? stressedEbitda/stressedInterest : 999;
-        stressedEbitdaSpan.innerText = formatMoney(stressedEbitda);
-        stressedLevSpan.innerText = formatRatio(stressedLev,2);
-        stressedIcrSpan.innerText = formatRatio(stressedIcr,2);
-        let stressFail = stressedLev>=3;
-        stressBadgeSpan.innerText = stressFail ? '❌ Ковенант нарушен' : '✅ Остаётся в норме';
-        stressBadgeSpan.className = stressFail ? 'badge fail' : 'badge pass';
-        let headroomStress = Math.max(0, 3-stressedLev).toFixed(2);
-        headroomStressSpan.innerText = headroomStress+'x до лимита';
-        stressCommentSpan.innerText = stressFail ? `🚨 При снижении EBITDA на ${Math.abs(stressPct*100)}% и росте ставки на ${Math.round(rateShift*1000)/10} п.п. Чистый долг / EBITDA = ${stressedLev.toFixed(2)}x → ковенант нарушен.` : `Стресс-тест пройден: запас ${headroomStress}x. ICR пересчитан по ставке ${(stressedRate*100).toFixed(1)}%.`;
-        
-        // Forecast
-        let growthQ = num(fcastGrowth)/100;
-        let ebitdaForecast = ebitdaBase * Math.pow(1+growthQ, 4); // 4 квартала с капитализацией квартального роста
-        let newD = num(newDebtInput);
-        let repay = num(repaymentInput);
-        let deltaR = num(deltaRate)/100; // п.п. к годовой ставке
-        let netDebtForecast = netDebtBase + newD - repay;
-        let forecastRate = Math.max(0, (num(avgRate)/100) + deltaR);
-        let grossDebtForecast = Math.max(0, getGrossDebt() + newD - repay);
-        let interestForecast = grossDebtForecast * forecastRate;
-        let levForecast = (ebitdaForecast>0) ? netDebtForecast/ebitdaForecast : 999;
-        fcastEbitdaSpan.innerText = formatMoney(ebitdaForecast);
-        fcastNetDebtSpan.innerText = formatMoney(netDebtForecast);
-        fcastLevSpan.innerText = formatRatio(levForecast,2);
-        let fcastOk = levForecast<3;
-        fcastBadge.innerText = fcastOk ? '✅ Прогноз соблюдает' : '⚠️ Нарушение через 12 мес';
-        fcastBadge.className = fcastOk ? 'badge pass' : 'badge fail';
-        let headroomFcast = Math.max(0, (3-levForecast)/3*100);
-        headroomFillFcast.style.width = Math.min(100, headroomFcast)+'%';
-        headroomFcastText.innerText = `Запас до 3.0x: ${(3-levForecast).toFixed(2)}x (${headroomFcast.toFixed(0)}% от лимита)`;
-        let forwardVerdict = (levForecast<3) ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.' : `⚠️ При текущем прогнозе через 4 квартала Чистый долг / EBITDA = ${levForecast.toFixed(2)}x → требуется снижение долга или рост EBITDA.`;
-        verdictForward.innerText = forwardVerdict;
-    }
-    
-    // event listeners
-    const allFact = [netIncome, interestExp, taxes, depreciation, equityEl];
-    const allDebt = [shortDebt, longDebt, cash, avgRate, leaseAdj];
-    const allStress = [stressEbitdaSlider, stressRateSlider];
-    const allForecast = [fcastGrowth, newDebtInput, repaymentInput, deltaRate];
-    [...allFact, ...allDebt].forEach(el => el.addEventListener('input', () => { updateFactAndDerived(); updateDebtPanel(); updateStressAndForecast(); }));
-    allStress.forEach(el => el.addEventListener('input', () => { updateStressAndForecast(); updateFactAndDerived(); }));
-    allForecast.forEach(el => el.addEventListener('input', () => updateStressAndForecast()));
-    syncBtn.addEventListener('click', () => { updateDebtPanel(); updateFactAndDerived(); updateStressAndForecast(); });
-    
-    stressEbitdaSlider.addEventListener('input', () => stressEbitdaVal.innerText = stressEbitdaSlider.value+'%');
-    stressRateSlider.addEventListener('input', () => stressRateVal.innerText = '+'+stressRateSlider.value+'%');
-    
-    // tabs — работает и на мобильных браузерах
-    function openTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active-pane'));
-
-        const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-        const activePane = document.getElementById(tabName + 'Pane');
-
-        if (activeBtn) activeBtn.classList.add('active');
-        if (activePane) activePane.classList.add('active-pane');
-
-        setTimeout(() => {
-            updateFactAndDerived();
-            updateDebtPanel();
-            updateStressAndForecast();
-        }, 0);
-    }
-
-    document.querySelector('.tabs').addEventListener('click', function(e) {
-        const btn = e.target.closest('.tab-btn');
-        if (!btn) return;
-        e.preventDefault();
-        openTab(btn.dataset.tab);
-    });
-
-    document.querySelector('.tabs').addEventListener('touchend', function(e) {
-        const btn = e.target.closest('.tab-btn');
-        if (!btn) return;
-        e.preventDefault();
-        openTab(btn.dataset.tab);
-    }, { passive: false });
-    
-const moneyInputIds = [
-    'netIncome','interestExp','taxes','depreciation','equity',
-    'shortDebt','longDebt','cash','leaseAdj','newDebt','repayment'
-];
-const decimalInputIds = ['avgRate','deltaRate','fcastGrowth'];
-
-function normalizeNumericText(value, allowDecimal=false) {
-    let raw = String(value || '')
-        .replace(/\u00A0/g, ' ')
-        .replace(/\s/g, '')
-        .replace(',', '.');
-
-    raw = raw.replace(allowDecimal ? /[^0-9.\-]/g : /[^0-9\-]/g, '');
-
-    const isNegative = raw.startsWith('-');
-    raw = raw.replace(/\-/g, '');
-    if (isNegative) raw = '-' + raw;
-
-    if (allowDecimal) {
-        const parts = raw.split('.');
-        raw = parts.shift() + (parts.length ? '.' + parts.join('') : '');
-    }
-    return raw;
-}
-
-function formatNumericInput(el) {
-    const allowDecimal = decimalInputIds.includes(el.id);
-    let raw = normalizeNumericText(el.value, allowDecimal);
-
-    if (raw === '' || raw === '-') {
-        el.value = raw;
-        return;
-    }
-
-    let [intPart, decPart] = raw.split('.');
-    const isNegative = intPart.startsWith('-');
-    intPart = intPart.replace('-', '');
-
-    // Убираем лишние нули слева, но оставляем один ноль
-    intPart = intPart.replace(/^0+(?=\d)/, '');
-
-    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    el.value = (isNegative ? '-' : '') + grouped + (allowDecimal && decPart !== undefined ? ',' + decPart.slice(0, 2) : '');
-}
-
-function preparePrettyNumberInputs() {
-    document.querySelectorAll('input[type="number"]').forEach(el => {
-        el.type = 'text';
-        el.inputMode = 'decimal';
-        el.autocomplete = 'off';
-
-        if (moneyInputIds.includes(el.id)) {
-            el.dataset.money = 'true';
-            el.inputMode = 'numeric';
-        } else if (['avgRate','deltaRate'].includes(el.id)) {
-            el.dataset.rate = 'true';
-        } else if (['fcastGrowth'].includes(el.id)) {
-            el.dataset.percent = 'true';
-        }
-
-        formatNumericInput(el);
-        el.addEventListener('input', () => {
-            formatNumericInput(el);
-            updateFactAndDerived();
-            updateDebtPanel();
-            updateStressAndForecast();
-        });
-    });
-}
-preparePrettyNumberInputs();
-
-
-    // init
-    updateFactAndDerived();
-    updateDebtPanel();
-    updateStressAndForecast();
-    stressEbitdaVal.innerText = stressEbitdaSlider.value+'%';
-    stressRateVal.innerText = '+'+stressRateSlider.value+' п.п.';
-</script>
-
-<script>
-/* ===== Mobile-safe calculation override ===== */
-(function(){
+(() => {
     const LIMIT_LEV = 3.0;
     const LIMIT_ICR = 2.0;
 
-    function el(id){ return document.getElementById(id); }
+    const el = id => document.getElementById(id);
 
     function readNumber(idOrEl) {
         const node = typeof idOrEl === 'string' ? el(idOrEl) : idOrEl;
         if (!node) return 0;
-        const raw = String(node.value || '')
+        const raw = String(node.value ?? '')
             .replace(/\u00A0/g, ' ')
             .replace(/\s/g, '')
             .replace(',', '.')
@@ -698,210 +404,264 @@ preparePrettyNumberInputs();
         return Number.isFinite(value) ? value : 0;
     }
 
-    function formatMoney(v) {
-        return new Intl.NumberFormat('ru-RU').format(Math.round(Number(v) || 0)).replace(/\u00A0/g, ' ');
+    function formatMoney(value) {
+        const n = Number.isFinite(value) ? value : 0;
+        return new Intl.NumberFormat('ru-RU').format(Math.round(n)).replace(/\u00A0/g, ' ');
     }
 
-    function formatRatio(v, digits=2) {
-        if (!Number.isFinite(v)) return '∞';
-        return v.toFixed(digits) + 'x';
+    function formatRatio(value, digits = 2) {
+        return Number.isFinite(value) ? `${value.toFixed(digits)}x` : '∞';
     }
 
-    function setText(id, text) {
+    function setText(id, value) {
         const node = el(id);
-        if (node) node.innerText = text;
+        if (node) node.textContent = value;
+    }
+
+    function setBadge(id, text, className) {
+        const node = el(id);
+        if (!node) return;
+        node.textContent = text;
+        node.className = `badge ${className}`;
+    }
+
+    function ratio(numerator, denominator) {
+        if (denominator > 0) return numerator / denominator;
+        if (numerator > 0) return Infinity;
+        return 0;
     }
 
     function calcBase() {
         const netIncome = readNumber('netIncome');
-        const interestExp = readNumber('interestExp');
+        const interestExp = Math.max(0, readNumber('interestExp'));
         const taxes = readNumber('taxes');
         const depreciation = readNumber('depreciation');
-        const equity = readNumber('equity') || 1;
+        const equity = readNumber('equity');
 
-        const shortDebt = readNumber('shortDebt');
-        const longDebt = readNumber('longDebt');
-        const cash = readNumber('cash');
-        const leaseAdj = readNumber('leaseAdj');
-        const avgRate = readNumber('avgRate');
+        const shortDebt = Math.max(0, readNumber('shortDebt'));
+        const longDebt = Math.max(0, readNumber('longDebt'));
+        const leaseAdj = Math.max(0, readNumber('leaseAdj'));
+        const cash = Math.max(0, readNumber('cash'));
+        const avgRate = Math.max(0, readNumber('avgRate'));
 
         const ebitda = netIncome + interestExp + taxes + depreciation;
-        const grossDebt = shortDebt + longDebt + leaseAdj;
+        const grossDebt = Math.max(0, shortDebt + longDebt + leaseAdj);
         const netDebt = grossDebt - cash;
-        const interestCalc = grossDebt * (avgRate / 100);
+        const interestCalc = grossDebt * avgRate / 100;
 
-        const lev = ebitda > 0 ? netDebt / ebitda : 999;
-        const icr = interestExp > 0 ? ebitda / interestExp : 999;
-        const d2e = equity > 0 ? netDebt / equity : 0;
-
-        return {interestExp, equity, avgRate, ebitda, grossDebt, netDebt, interestCalc, lev, icr, d2e};
+        return {
+            interestExp,
+            equity,
+            avgRate,
+            ebitda,
+            grossDebt,
+            netDebt,
+            interestCalc,
+            lev: ratio(netDebt, ebitda),
+            icr: ratio(ebitda, interestExp),
+            d2e: ratio(netDebt, equity)
+        };
     }
 
-    window.updateFactAndDerived = function() {
+    function isLevCompliant(value) {
+        // Лимит трактуется как «не более 3,0x».
+        return value <= LIMIT_LEV;
+    }
+
+    function isIcrCompliant(value) {
+        return value >= LIMIT_ICR;
+    }
+
+    function updateFactAndDerived() {
         const b = calcBase();
 
-        setText('factEbitda', formatMoney(b.ebitda) + ' тыс. руб');
+        setText('factEbitda', `${formatMoney(b.ebitda)} тыс. руб`);
+        setBadge('factLev', formatRatio(b.lev), isLevCompliant(b.lev) ? 'pass' : 'fail');
+        setBadge('factIcr', formatRatio(b.icr), isIcrCompliant(b.icr) ? 'pass' : 'fail');
+        setBadge('factD2E', formatRatio(b.d2e), b.d2e < 1 ? 'pass' : 'warn');
 
-        const levNode = el('factLev');
-        if (levNode) {
-            levNode.innerText = formatRatio(b.lev, 2);
-            levNode.className = b.lev < LIMIT_LEV ? 'badge pass' : 'badge fail';
-        }
+        const headroomX = Number.isFinite(b.lev) ? LIMIT_LEV - b.lev : -Infinity;
+        const headroomPct = isLevCompliant(b.lev)
+            ? Math.max(0, Math.min(100, headroomX / LIMIT_LEV * 100))
+            : 0;
 
-        const icrNode = el('factIcr');
-        if (icrNode) {
-            icrNode.innerText = formatRatio(b.icr, 2);
-            icrNode.className = b.icr >= LIMIT_ICR ? 'badge pass' : 'badge fail';
-        }
-
-        const d2eNode = el('factD2E');
-        if (d2eNode) {
-            d2eNode.innerText = formatRatio(b.d2e, 2);
-            d2eNode.className = b.d2e < 1 ? 'badge pass' : 'badge warn';
-        }
-
-        const headroom = b.lev >= LIMIT_LEV ? 0 : Math.max(0, (LIMIT_LEV - b.lev) / LIMIT_LEV * 100);
         const fill = el('headroomFillFact');
-        if (fill) fill.style.width = Math.min(100, headroom) + '%';
-        setText('factHeadroomText', `Запас до 3.0x: ${(LIMIT_LEV - b.lev).toFixed(2)}x (${headroom.toFixed(0)}% от лимита)`);
+        if (fill) fill.style.width = `${headroomPct}%`;
 
-        const verdict = el('verdictFact');
-        if (verdict) {
-            verdict.innerText = (b.lev < LIMIT_LEV && b.icr >= LIMIT_ICR)
-                ? '✅ Ковенанты соблюдены. Рекомендуется мониторинг ликвидности.'
-                : (b.lev >= LIMIT_LEV
-                    ? '⚠️ НАРУШЕНИЕ: Чистый долг / EBITDA > 3.0x, требуется waiver или рефинансирование.'
-                    : '⚠️ Низкое процентное покрытие, риск ковенанта.');
+        setText(
+            'factHeadroomText',
+            Number.isFinite(headroomX)
+                ? `Запас до 3,0x: ${headroomX.toFixed(2)}x (${headroomPct.toFixed(0)}% от лимита)`
+                : 'Запас до 3,0x: расчёт невозможен'
+        );
+
+        let verdict;
+        if (isLevCompliant(b.lev) && isIcrCompliant(b.icr)) {
+            verdict = '✅ Ковенанты соблюдены. Рекомендуется продолжать мониторинг ликвидности.';
+        } else if (!isLevCompliant(b.lev)) {
+            verdict = '⚠️ НАРУШЕНИЕ: Чистый долг / EBITDA выше 3,0x. Требуется анализ waiver, снижения долга или роста EBITDA.';
+        } else {
+            verdict = '⚠️ НАРУШЕНИЕ: ICR ниже 2,0x. Процентное покрытие недостаточно.';
         }
+        setText('verdictFact', verdict);
 
         return b;
-    };
+    }
 
-    window.updateDebtPanel = function() {
+    function updateDebtPanel() {
         const b = calcBase();
-        setText('grossDebt', formatMoney(b.grossDebt));
-        setText('netDebtCalc', formatMoney(b.netDebt));
-        setText('annualInterestPay', formatMoney(b.interestCalc) + ' тыс. руб (оценочно)');
+        setText('grossDebt', `${formatMoney(b.grossDebt)} тыс. руб`);
+        setText('netDebtCalc', `${formatMoney(b.netDebt)} тыс. руб`);
+        setText('annualInterestPay', `${formatMoney(b.interestCalc)} тыс. руб (оценочно)`);
         return b;
-    };
+    }
 
-    window.updateStressAndForecast = function() {
-        const b = window.updateFactAndDerived();
+    function updateStressAndForecast() {
+        const b = calcBase();
 
+        // Стресс-тест
         const stressPct = readNumber('stressEbitda') / 100;
         const stressRatePp = readNumber('stressRate');
         const stressedEbitda = b.ebitda * (1 + stressPct);
-        const stressedInterest = b.grossDebt * ((b.avgRate + stressRatePp) / 100);
-        const stressedLev = stressedEbitda > 0 ? b.netDebt / stressedEbitda : 999;
-        const stressedIcr = stressedInterest > 0 ? stressedEbitda / stressedInterest : 999;
+        const stressedRate = Math.max(0, b.avgRate + stressRatePp);
+        const stressedInterest = b.grossDebt * stressedRate / 100;
+        const stressedLev = ratio(b.netDebt, stressedEbitda);
+        const stressedIcr = ratio(stressedEbitda, stressedInterest);
 
-        setText('stressedEbitda', formatMoney(stressedEbitda));
-        setText('stressedLev', formatRatio(stressedLev, 2));
-        setText('stressedIcr', formatRatio(stressedIcr, 2));
+        setText('stressedEbitda', `${formatMoney(stressedEbitda)} тыс. руб`);
+        setText('stressedLev', formatRatio(stressedLev));
+        setText('stressedIcr', formatRatio(stressedIcr));
 
-        const stressFail = stressedLev >= LIMIT_LEV || stressedIcr < LIMIT_ICR;
-        const stressBadge = el('stressBadge');
-        if (stressBadge) {
-            stressBadge.innerText = stressFail ? '❌ Ковенант нарушен' : '✅ Остаётся в норме';
-            stressBadge.className = stressFail ? 'badge fail' : 'badge pass';
-        }
+        const stressOk = isLevCompliant(stressedLev) && isIcrCompliant(stressedIcr);
+        setBadge('stressBadge', stressOk ? '✅ Ковенанты соблюдены' : '❌ Ковенант нарушен', stressOk ? 'pass' : 'fail');
 
-        const headroomStress = Math.max(0, LIMIT_LEV - stressedLev).toFixed(2);
-        setText('headroomStress', headroomStress + 'x до лимита');
-        setText('stressComment', stressFail
-            ? `🚨 В стресс-сценарии Чистый долг / EBITDA = ${stressedLev.toFixed(2)}x, ICR = ${stressedIcr.toFixed(2)}x.`
-            : `Стресс-тест пройден: запас ${headroomStress}x.`);
+        const stressHeadroom = Number.isFinite(stressedLev) ? LIMIT_LEV - stressedLev : -Infinity;
+        setText(
+            'headroomStress',
+            Number.isFinite(stressHeadroom)
+                ? `${Math.max(0, stressHeadroom).toFixed(2)}x до лимита`
+                : 'расчёт невозможен'
+        );
 
-        const growthQ = readNumber('fcastGrowth') / 100;
-        const newDebt = readNumber('newDebt');
-        const repayment = readNumber('repayment');
+        setText(
+            'stressComment',
+            stressOk
+                ? `Стресс-тест пройден: Чистый долг / EBITDA = ${formatRatio(stressedLev)}, ICR = ${formatRatio(stressedIcr)}.`
+                : `🚨 В стресс-сценарии Чистый долг / EBITDA = ${formatRatio(stressedLev)}, ICR = ${formatRatio(stressedIcr)}.`
+        );
+
+        // Прогноз на 12 месяцев
+        const annualGrowth = readNumber('fcastGrowth') / 100;
+        const newDebt = Math.max(0, readNumber('newDebt'));
+        const repayment = Math.max(0, readNumber('repayment'));
         const deltaRatePp = readNumber('deltaRate');
 
-        const ebitdaForecast = b.ebitda * Math.pow(1 + growthQ, 4);
-        const netDebtForecast = b.netDebt + newDebt - repayment;
-        const grossDebtForecast = b.grossDebt + newDebt - repayment;
-        const interestForecast = grossDebtForecast * ((b.avgRate + deltaRatePp) / 100);
-        const levForecast = ebitdaForecast > 0 ? netDebtForecast / ebitdaForecast : 999;
-        const icrForecast = interestForecast > 0 ? ebitdaForecast / interestForecast : 999;
+        const ebitdaForecast = b.ebitda * (1 + annualGrowth);
+        const grossDebtForecast = Math.max(0, b.grossDebt + newDebt - repayment);
+        const netDebtForecast = grossDebtForecast - Math.max(0, readNumber('cash'));
+        const forecastRate = Math.max(0, b.avgRate + deltaRatePp);
+        const interestForecast = grossDebtForecast * forecastRate / 100;
+        const levForecast = ratio(netDebtForecast, ebitdaForecast);
+        const icrForecast = ratio(ebitdaForecast, interestForecast);
 
-        setText('fcastEbitda', formatMoney(ebitdaForecast));
-        setText('fcastNetDebt', formatMoney(netDebtForecast));
-        setText('fcastLev', formatRatio(levForecast, 2));
+        setText('fcastEbitda', `${formatMoney(ebitdaForecast)} тыс. руб`);
+        setText('fcastNetDebt', `${formatMoney(netDebtForecast)} тыс. руб`);
+        setText('fcastLev', formatRatio(levForecast));
 
-        const fcastOk = levForecast < LIMIT_LEV && icrForecast >= LIMIT_ICR;
-        const fcastBadge = el('fcastBadge');
-        if (fcastBadge) {
-            fcastBadge.innerText = fcastOk ? '✅ Прогноз соблюдает' : '⚠️ Риск нарушения';
-            fcastBadge.className = fcastOk ? 'badge pass' : 'badge fail';
-        }
+        const forecastOk = isLevCompliant(levForecast) && isIcrCompliant(icrForecast);
+        setBadge(
+            'fcastBadge',
+            forecastOk ? '✅ Прогноз соблюдает' : '⚠️ Риск нарушения',
+            forecastOk ? 'pass' : 'fail'
+        );
 
-        const headroomFcast = levForecast >= LIMIT_LEV ? 0 : Math.max(0, (LIMIT_LEV - levForecast) / LIMIT_LEV * 100);
-        const fillFcast = el('headroomFillFcast');
-        if (fillFcast) fillFcast.style.width = Math.min(100, headroomFcast) + '%';
-        setText('headroomFcastText', `Запас до 3.0x: ${(LIMIT_LEV - levForecast).toFixed(2)}x (${headroomFcast.toFixed(0)}% от лимита)`);
+        const forecastHeadroomX = Number.isFinite(levForecast) ? LIMIT_LEV - levForecast : -Infinity;
+        const forecastHeadroomPct = isLevCompliant(levForecast)
+            ? Math.max(0, Math.min(100, forecastHeadroomX / LIMIT_LEV * 100))
+            : 0;
 
-        setText('verdictForward', fcastOk
-            ? '✅ Прогноз соблюдения ковенантов. Headroom стабилен.'
-            : `⚠️ При текущем прогнозе: Чистый долг / EBITDA = ${levForecast.toFixed(2)}x, ICR = ${icrForecast.toFixed(2)}x. Требуется снижение долга или рост EBITDA.`);
+        const fill = el('headroomFillFcast');
+        if (fill) fill.style.width = `${forecastHeadroomPct}%`;
 
-        return { ...b, stressedEbitda, stressedLev, stressedIcr, ebitdaForecast, netDebtForecast, levForecast, icrForecast };
-    };
+        setText(
+            'headroomFcastText',
+            Number.isFinite(forecastHeadroomX)
+                ? `Запас до 3,0x: ${forecastHeadroomX.toFixed(2)}x (${forecastHeadroomPct.toFixed(0)}% от лимита)`
+                : 'Запас до 3,0x: расчёт невозможен'
+        );
+
+        setText(
+            'verdictForward',
+            forecastOk
+                ? `✅ Прогноз соблюдения ковенантов: Чистый долг / EBITDA = ${formatRatio(levForecast)}, ICR = ${formatRatio(icrForecast)}.`
+                : `⚠️ Прогнозный риск: Чистый долг / EBITDA = ${formatRatio(levForecast)}, ICR = ${formatRatio(icrForecast)}. Требуется снижение долга, рост EBITDA или пересмотр условий финансирования.`
+        );
+    }
+
+    const decimalIds = new Set(['avgRate', 'deltaRate', 'fcastGrowth']);
 
     function formatInputValue(node) {
         if (!node || node.type === 'range') return;
-        const raw = String(node.value || '').replace(/\u00A0/g, ' ').replace(/\s/g, '').replace(',', '.');
-        if (raw === '' || raw === '-') return;
 
-        const decimalIds = ['avgRate', 'deltaRate', 'fcastGrowth'];
-        const allowDecimal = decimalIds.includes(node.id);
-        let cleaned = raw.replace(allowDecimal ? /[^0-9.\-]/g : /[^0-9\-]/g, '');
-        if (cleaned === '' || cleaned === '-') return;
+        let raw = String(node.value ?? '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\s/g, '')
+            .replace(',', '.');
 
-        const negative = cleaned.startsWith('-');
-        cleaned = cleaned.replace(/\-/g, '');
-        if (negative) cleaned = '-' + cleaned;
+        const allowDecimal = decimalIds.has(node.id);
+        raw = raw.replace(allowDecimal ? /[^0-9.\-]/g : /[^0-9\-]/g, '');
 
-        let parts = cleaned.split('.');
-        let intPart = parts[0].replace('-', '').replace(/^0+(?=\d)/, '');
-        let decPart = parts[1];
+        if (raw === '' || raw === '-') {
+            node.value = raw;
+            return;
+        }
 
+        const negative = raw.startsWith('-');
+        raw = raw.replace(/\-/g, '');
+
+        let [intPart = '0', ...decimalParts] = raw.split('.');
+        intPart = intPart.replace(/^0+(?=\d)/, '');
         const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        node.value = (negative ? '-' : '') + grouped + (allowDecimal && decPart !== undefined ? ',' + decPart.slice(0, 2) : '');
+        const decimals = decimalParts.join('').slice(0, 2);
+
+        node.value = `${negative ? '-' : ''}${grouped}${allowDecimal && decimalParts.length ? ',' + decimals : ''}`;
     }
 
     function recalcAll() {
-        window.updateFactAndDerived();
-        window.updateDebtPanel();
-        window.updateStressAndForecast();
+        updateFactAndDerived();
+        updateDebtPanel();
+        updateStressAndForecast();
 
-        const stressEbitdaVal = el('stressEbitdaVal');
-        const stressRateVal = el('stressRateVal');
-        if (stressEbitdaVal) stressEbitdaVal.innerText = readNumber('stressEbitda') + '%';
-        if (stressRateVal) stressRateVal.innerText = '+' + readNumber('stressRate') + ' п.п.';
+        setText('stressEbitdaVal', `${readNumber('stressEbitda')}%`);
+        setText('stressRateVal', `+${readNumber('stressRate')} п.п.`);
     }
 
-    document.querySelectorAll('input').forEach(input => {
-        if (input.type !== 'range') {
-            input.setAttribute('inputmode', input.id === 'avgRate' || input.id === 'deltaRate' || input.id === 'fcastGrowth' ? 'decimal' : 'numeric');
-            input.setAttribute('autocomplete', 'off');
-            formatInputValue(input);
-            input.addEventListener('input', function(){
-                formatInputValue(this);
-                try { this.setSelectionRange(this.value.length, this.value.length); } catch(e) {}
-                recalcAll();
-            });
-            input.addEventListener('blur', function(){
-                formatInputValue(this);
-                recalcAll();
-            });
-        } else {
-            input.addEventListener('input', recalcAll);
-        }
+    // Числовые поля: удобный ввод с пробелами-разделителями.
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.type = 'text';
+        input.inputMode = decimalIds.has(input.id) ? 'decimal' : 'numeric';
+        input.autocomplete = 'off';
+        formatInputValue(input);
     });
 
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.type !== 'range') {
+                formatInputValue(input);
+                try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+            }
+            recalcAll();
+        });
+        input.addEventListener('blur', () => {
+            if (input.type !== 'range') formatInputValue(input);
+            recalcAll();
+        });
+    });
+
+    // Кнопка действительно переносит расчётные проценты в фактическое поле.
     const syncBtn = el('syncDebtBtn');
     if (syncBtn) {
-        syncBtn.addEventListener('click', function(){
+        syncBtn.addEventListener('click', () => {
             const b = calcBase();
             const interestInput = el('interestExp');
             if (interestInput) {
@@ -912,17 +672,18 @@ preparePrettyNumberInputs();
         });
     }
 
-    if (document.querySelector('.tabs')) {
-        document.querySelector('.tabs').addEventListener('click', function(e){
-            const btn = e.target.closest('.tab-btn');
+    const tabs = document.querySelector('.tabs');
+    if (tabs) {
+        tabs.addEventListener('click', event => {
+            const btn = event.target.closest('.tab-btn');
             if (!btn) return;
-            e.preventDefault();
+            event.preventDefault();
 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active-pane'));
+            document.querySelectorAll('.tab-btn').forEach(node => node.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(node => node.classList.remove('active-pane'));
 
             btn.classList.add('active');
-            const pane = el(btn.dataset.tab + 'Pane');
+            const pane = el(`${btn.dataset.tab}Pane`);
             if (pane) pane.classList.add('active-pane');
             recalcAll();
         });
